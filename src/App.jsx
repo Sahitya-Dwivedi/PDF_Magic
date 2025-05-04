@@ -7,9 +7,9 @@ import Footer from "./components/footer";
 function App() {
   // Set document title to PDF Magic
   document.title = "PDF Magic";
-  
+
   return (
-    <div className="App bg-gradient-to-br from-gray-900 to-black text-white w-screen min-h-screen flex flex-col">
+    <div className="App bg-gradient-to-br from-gray-900 to-black text-white w-screen min-h-screen flex flex-col overflow-x-hidden">
       <Navbar />
       <Hero />
       <Features />

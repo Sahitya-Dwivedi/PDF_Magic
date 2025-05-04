@@ -1,1 +1,6 @@
+/* Add at the beginning of your CSS file */
+html, body {
+  overflow-x: hidden;
+}
+
 @import "tailwindcss";
