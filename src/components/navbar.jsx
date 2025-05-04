@@ -1,7 +1,12 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 function Navbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  useEffect(() => {
+    document.documentElement.style.scrollBehavior = "smooth";
+    document.documentElement.style.scroll
+  }, []);
 
   return (
     <nav className="bg-gray-900/80 backdrop-blur-sm sticky top-0 z-50 px-6 py-4 shadow-lg">
@@ -14,10 +19,10 @@ function Navbar() {
         </div>
         
         <div className="hidden md:flex space-x-8">
-          <a href="#" className="hover:text-purple-400 transition-colors">Home</a>
-          <a href="#features" className="hover:text-purple-400 transition-colors">Features</a>
-          <a href="#" className="hover:text-purple-400 transition-colors">Tutorials</a>
-          <a href="#" className="hover:text-purple-400 transition-colors">About</a>
+          <a href="#home" className="relative hover:text-purple-400 transition-colors after:content-[''] after:absolute after:left-0 after:bottom-0 after:w-0 after:h-[2px] after:bg-purple-400 after:transition-all after:duration-300 hover:after:w-full">Home</a>
+          <a href="#features" className="relative hover:text-purple-400 transition-colors after:content-[''] after:absolute after:left-0 after:bottom-0 after:w-0 after:h-[2px] after:bg-purple-400 after:transition-all after:duration-300 hover:after:w-full">Features</a>
+          <a href="#tutorials" className="relative hover:text-purple-400 transition-colors after:content-[''] after:absolute after:left-0 after:bottom-0 after:w-0 after:h-[2px] after:bg-purple-400 after:transition-all after:duration-300 hover:after:w-full">Tutorials</a>
+          <a href="#about" className="relative hover:text-purple-400 transition-colors after:content-[''] after:absolute after:left-0 after:bottom-0 after:w-0 after:h-[2px] after:bg-purple-400 after:transition-all after:duration-300 hover:after:w-full">About</a>
         </div>
         
         <div className="flex items-center space-x-4">
@@ -44,10 +49,10 @@ function Navbar() {
       {/* Mobile menu */}
       {mobileMenuOpen && (
         <div className="md:hidden mt-4 pb-4 pt-2 space-y-3">
-          <a href="#" className="block px-4 py-2 hover:bg-gray-800 rounded-md">Home</a>
-          <a href="#features" className="block px-4 py-2 hover:bg-gray-800 rounded-md">Features</a>
-          <a href="#" className="block px-4 py-2 hover:bg-gray-800 rounded-md">Tutorials</a>
-          <a href="#" className="block px-4 py-2 hover:bg-gray-800 rounded-md">About</a>
+          <a href="#home" className="block px-4 py-2 hover:bg-gray-800 rounded-md relative after:content-[''] after:absolute after:left-0 after:bottom-0 after:w-0 after:h-[2px] after:bg-purple-400 after:transition-all after:duration-300 hover:after:w-full">Home</a>
+          <a href="#features" className="block px-4 py-2 hover:bg-gray-800 rounded-md relative after:content-[''] after:absolute after:left-0 after:bottom-0 after:w-0 after:h-[2px] after:bg-purple-400 after:transition-all after:duration-300 hover:after:w-full">Features</a>
+          <a href="#tutorials" className="block px-4 py-2 hover:bg-gray-800 rounded-md relative after:content-[''] after:absolute after:left-0 after:bottom-0 after:w-0 after:h-[2px] after:bg-purple-400 after:transition-all after:duration-300 hover:after:w-full">Tutorials</a>
+          <a href="#about" className="block px-4 py-2 hover:bg-gray-800 rounded-md relative after:content-[''] after:absolute after:left-0 after:bottom-0 after:w-0 after:h-[2px] after:bg-purple-400 after:transition-all after:duration-300 hover:after:w-full">About</a>
         </div>
       )}
     </nav>
