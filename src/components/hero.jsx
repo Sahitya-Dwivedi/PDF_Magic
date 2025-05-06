@@ -7,6 +7,7 @@ function Hero() {
   const [showOptions, setShowOptions] = useState(false);
   const [showEditPdfModal, setShowEditPdfModal] = useState(false);
   const [showTextToPdfModal, setShowTextToPdfModal] = useState(false);
+  const [showPdfResultModal, setShowPdfResultModal] = useState(false);
 
   // Animation state
   const [animateModal, setAnimateModal] = useState(false);
@@ -14,6 +15,8 @@ function Hero() {
   // File content states
   const [selectedTextFileName, setSelectedTextFileName] = useState("");
   const [textContent, setTextContent] = useState("");
+  const [pdfBlob, setPdfBlob] = useState(null);
+  const [pdfUrl, setPdfUrl] = useState("");
 
   // Processing state
   const [isConverting, setIsConverting] = useState(false);
@@ -76,18 +79,57 @@ function Hero() {
 
     setIsConverting(true);
 
-    const downloadPDF = async () => {
+    try {
       const blob = await pdf(<MyDoc content={textContent} />).toBlob();
       const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = selectedTextFileName.replace(/\.[^/.]+$/, ".pdf"); // Change extension to .pdf
-      a.click();
-      URL.revokeObjectURL(url);
-    };
 
-    downloadPDF();
-    setIsConverting(false);
+      // Store the blob and URL in state
+      setPdfBlob(blob);
+      setPdfUrl(url);
+
+      // Hide the text-to-pdf modal and show the result modal
+      setShowTextToPdfModal(false);
+      setShowPdfResultModal(true);
+      setIsConverting(false);
+    } catch (error) {
+      console.error("Error converting PDF:", error);
+      setIsConverting(false);
+    }
+  };
+
+  const handleDownloadPdf = () => {
+    if (!pdfBlob) return;
+
+    const fileName = selectedTextFileName.replace(/\.[^/.]+$/, ".pdf");
+    const a = document.createElement("a");
+    a.href = pdfUrl;
+    a.download = fileName;
+    a.click();
+
+    // Clean up after download
+    setTimeout(() => {
+      setShowPdfResultModal(false);
+      resetPdfStates();
+    }, 500);
+  };
+
+  const handleViewPdf = () => {
+    if (!pdfUrl) return;
+    // Open PDF in a new tab
+    window.open(pdfUrl, "_blank");
+  };
+
+  const resetPdfStates = () => {
+    // Clean up URL object to prevent memory leaks
+    if (pdfUrl) URL.revokeObjectURL(pdfUrl);
+
+    setPdfBlob(null);
+    setPdfUrl("");
+    setSelectedTextFileName("");
+    setTextContent("");
+    if (textFileInputRef.current) {
+      textFileInputRef.current.value = "";
+    }
   };
 
   return (
@@ -412,6 +454,125 @@ function Hero() {
                     ) : (
                       "Convert"
                     )}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* PDF Result Modal */}
+        {showPdfResultModal && (
+          <div
+            className="fixed inset-0 bg-black/70 flex items-center justify-center z-50"
+            onClick={() => {
+              setShowPdfResultModal(false);
+              resetPdfStates();
+            }}
+          >
+            <div
+              className="bg-gray-800 border border-purple-500/30 rounded-xl p-8 w-full max-w-md transform transition-all shadow-2xl shadow-purple-500/20"
+              onClick={(e) => e.stopPropagation()}
+              style={{ backdropFilter: "blur(12px)" }}
+            >
+              <div className="flex justify-between items-center mb-6">
+                <h3 className="text-xl font-bold text-center bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-pink-500">
+                  PDF Successfully Created!
+                </h3>
+                <button
+                  className="text-gray-400 hover:text-white"
+                  onClick={() => {
+                    setShowPdfResultModal(false);
+                    resetPdfStates();
+                  }}
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-5 w-5"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M6 18L18 6M6 6l12 12"
+                    />
+                  </svg>
+                </button>
+              </div>
+
+              <div className="space-y-6">
+                <div className="bg-gray-700/40 rounded-lg p-8 text-center">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-16 w-16 mx-auto text-green-400 mb-4"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                    />
+                  </svg>
+                  <p className="text-gray-300 mb-2 font-medium">
+                    Your PDF is ready!
+                  </p>
+                  <p className="text-purple-300 mb-4">
+                    {selectedTextFileName.replace(/\.[^/.]+$/, ".pdf")}
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <button
+                    className="bg-indigo-600 hover:bg-indigo-700 text-white py-3 rounded-lg transition-all flex items-center justify-center"
+                    onClick={handleViewPdf}
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="h-5 w-5 mr-2"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                      />
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                      />
+                    </svg>
+                    View PDF
+                  </button>
+                  <button
+                    className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white py-3 rounded-lg transition-all flex items-center justify-center"
+                    onClick={handleDownloadPdf}
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="h-5 w-5 mr-2"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
+                      />
+                    </svg>
+                    Download
                   </button>
                 </div>
               </div>
