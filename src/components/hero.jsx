@@ -88,9 +88,15 @@ function Hero() {
     // console.log("Selected photo files:", Object.values(files));
     if (files && files.length > 0) {
       console.log("Selected photo file:", files.name);
-      setSelectedPhotoFileName(files.map((file) => file.name).join(", "));
-      setSelectedPhotoFileName(files.map((file,i) => i<2? file.name:undefined).filter(value=>value!==undefined).join(", ") + " and more...");
-
+      if (files.length < 3)
+        setSelectedPhotoFileName(files.map((file) => file.name).join(", "));
+      else
+        setSelectedPhotoFileName(
+          files
+            .map((file, i) => (i < 2 ? file.name : undefined))
+            .filter((value) => value !== undefined)
+            .join(", ") + " and more..."
+        );
       // Read the file content as data URL
       console.log("Selected photo file:", files);
       const reader = files.map((file) => URL.createObjectURL(file));
@@ -565,7 +571,6 @@ function Hero() {
                 <div className="bg-gray-700/40 border-2 border-dashed border-purple-500/30 rounded-lg p-8 text-center">
                   {selectedPhotoFileName ? (
                     <div className="flex flex-col items-center">
-
                       <svg
                         xmlns="http://www.w3.org/2000/svg"
                         className="h-12 w-12 mx-auto text-green-400 mb-2"
