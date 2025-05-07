@@ -1,21 +1,39 @@
-import { Page, Text, View, Document, StyleSheet, PDFDownloadLink } from '@react-pdf/renderer';
+import {
+  Page,
+  Text,
+  View,
+  Document,
+  StyleSheet,
+  Image,
+} from "@react-pdf/renderer";
 
 // Styles
 const styles = StyleSheet.create({
-  page: { flexDirection: 'column', padding: 30 },
-  section: { marginBottom: 10 }
+  TextPage: { flexDirection: "column", padding: 30 },
+  ImagePage: { flexDirection: "row", padding: 0, alignItems: "center" },
+  section: { marginBottom: 10 },
+  img: { width: "100%", height: "auto" },
 });
 
 // Create document component
-const MyDoc = ({content}) => (
-  <Document>
-    <Page size="A4" style={styles.page}>
-      <View style={styles.section}>
-        <Text>{content}</Text>
-      </View>
-    </Page>
-  </Document>
-);
-
+function MyDoc({ content, contentType }) {
+  return contentType === "Text" ? (
+    <Document>
+      <Page size="A4" style={styles.TextPage}>
+        <View style={styles.section}>
+          <Text>{content}</Text>
+        </View>
+      </Page>
+    </Document>
+  ) : (
+    <Document>
+      <Page size="A4" style={styles.page}>
+        {content.map((img,i) => {
+          return <Image src={img} style={styles.img} key={i} />;
+        })}
+      </Page>
+    </Document>
+  );
+}
 
 export default MyDoc;
