@@ -40,18 +40,15 @@ function Hero() {
   }, [showOptions]);
 
   const handleEditPdfClick = () => {
-    console.log("Edit PDF clicked");
     setShowEditPdfModal(true);
   };
 
   const handleTextToPdfClick = () => {
-    console.log("Text to PDF clicked");
     setShowOptions(false);
     setShowTextToPdfModal(true);
   };
 
   const handlePhotoToPdfClick = () => {
-    console.log("Photo to PDF clicked");
     setShowOptions(false);
     setShowPhotoToPdfModal(true);
   };
@@ -59,8 +56,6 @@ function Hero() {
   const handlePdfFileSelected = (e) => {
     const file = e.target.files;
     if (file) {
-      console.log("Selected text file:", file.name);
-      console.log("Selected text file:", file);
       setSelectedTextFileName(file.name);
       return file;
     }
@@ -69,7 +64,6 @@ function Hero() {
   const handleTextFileSelected = (e) => {
     const file = e.target.files[0];
     if (file) {
-      console.log("Selected text file:", file.name);
       setSelectedTextFileName(file.name);
 
       // Read the file content
@@ -85,9 +79,7 @@ function Hero() {
 
   const handlePhotoFileSelected = (e) => {
     const files = Object.values(e.target.files);
-    // console.log("Selected photo files:", Object.values(files));
     if (files && files.length > 0) {
-      console.log("Selected photo file:", files.name);
       if (files.length < 3)
         setSelectedPhotoFileName(files.map((file) => file.name).join(", "));
       else
@@ -97,8 +89,6 @@ function Hero() {
             .filter((value) => value !== undefined)
             .join(", ") + " and more..."
         );
-      // Read the file content as data URL
-      console.log("Selected photo file:", files);
       const reader = files.map((file) => URL.createObjectURL(file));
       setPhotoContent(reader);
 
@@ -135,11 +125,6 @@ function Hero() {
   };
 
   const convertPhotoToPdf = async () => {
-    // if (!photoContent || !selectedPhotoFileName) {
-    //   console.error("No image file or content available");
-    //   return;
-    // }
-
     setIsConverting(true);
 
     try {
@@ -889,7 +874,7 @@ function Hero() {
                   </button>
                   <button
                     className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white py-2 rounded-lg transition-all"
-                    onClick={() => console.log("Continue to edit PDF")}
+                    onClick={() => {}}
                   >
                     Continue
                   </button>
