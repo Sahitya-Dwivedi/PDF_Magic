@@ -7,6 +7,7 @@ function Hero() {
   const [showOptions, setShowOptions] = useState(false);
   const [showEditPdfModal, setShowEditPdfModal] = useState(false);
   const [showTextToPdfModal, setShowTextToPdfModal] = useState(false);
+  const [showPhotoToPdfModal, setShowPhotoToPdfModal] = useState(false);
   const [showPdfResultModal, setShowPdfResultModal] = useState(false);
 
   // Animation state
@@ -14,7 +15,9 @@ function Hero() {
 
   // File content states
   const [selectedTextFileName, setSelectedTextFileName] = useState("");
+  const [selectedPhotoFileName, setSelectedPhotoFileName] = useState("");
   const [textContent, setTextContent] = useState("");
+  const [photoContent, setPhotoContent] = useState("");
   const [pdfBlob, setPdfBlob] = useState(null);
   const [pdfUrl, setPdfUrl] = useState("");
 
@@ -24,6 +27,7 @@ function Hero() {
   // Refs for file inputs
   const pdfFileInputRef = useRef(null);
   const textFileInputRef = useRef(null);
+  const photoFileInputRef = useRef(null);
 
   useEffect(() => {
     if (showOptions) {
@@ -46,11 +50,19 @@ function Hero() {
     setShowTextToPdfModal(true);
   };
 
+  const handlePhotoToPdfClick = () => {
+    console.log("Photo to PDF clicked");
+    setShowOptions(false);
+    setShowPhotoToPdfModal(true);
+  };
+
   const handlePdfFileSelected = (e) => {
-    const file = e.target.files[0];
+    const file = e.target.files;
     if (file) {
-      console.log("Selected PDF file:", file.name);
-      // Process the PDF file here
+      console.log("Selected text file:", file.name);
+      console.log("Selected text file:", file);
+      setSelectedTextFileName(file.name);
+      return file;
     }
   };
 
@@ -71,6 +83,23 @@ function Hero() {
     }
   };
 
+  const handlePhotoFileSelected = (e) => {
+    const files = Object.values(e.target.files);
+    // console.log("Selected photo files:", Object.values(files));
+    if (files && files.length > 0) {
+      console.log("Selected photo file:", files.name);
+      setSelectedPhotoFileName(files.map((file) => file.name).join(", "));
+      setSelectedPhotoFileName(files.map((file,i) => i<2? file.name:undefined).filter(value=>value!==undefined).join(", ") + " and more...");
+
+      // Read the file content as data URL
+      console.log("Selected photo file:", files);
+      const reader = files.map((file) => URL.createObjectURL(file));
+      setPhotoContent(reader);
+
+      return files;
+    }
+  };
+
   const convertTextToPdf = async () => {
     if (!textContent || !selectedTextFileName) {
       console.error("No file or content available");
@@ -80,7 +109,9 @@ function Hero() {
     setIsConverting(true);
 
     try {
-      const blob = await pdf(<MyDoc content={textContent} />).toBlob();
+      const blob = await pdf(
+        <MyDoc content={textContent} contentType={"Text"} />
+      ).toBlob();
       const url = URL.createObjectURL(blob);
 
       // Store the blob and URL in state
@@ -89,6 +120,34 @@ function Hero() {
 
       // Hide the text-to-pdf modal and show the result modal
       setShowTextToPdfModal(false);
+      setShowPdfResultModal(true);
+      setIsConverting(false);
+    } catch (error) {
+      console.error("Error converting PDF:", error);
+      setIsConverting(false);
+    }
+  };
+
+  const convertPhotoToPdf = async () => {
+    // if (!photoContent || !selectedPhotoFileName) {
+    //   console.error("No image file or content available");
+    //   return;
+    // }
+
+    setIsConverting(true);
+
+    try {
+      const blob = await pdf(
+        <MyDoc content={photoContent} contentType={"Image"} />
+      ).toBlob();
+      const url = URL.createObjectURL(blob);
+
+      // Store the blob and URL in state
+      setPdfBlob(blob);
+      setPdfUrl(url);
+
+      // Hide the photo-to-pdf modal and show the result modal
+      setShowPhotoToPdfModal(false);
       setShowPdfResultModal(true);
       setIsConverting(false);
     } catch (error) {
@@ -126,9 +185,14 @@ function Hero() {
     setPdfBlob(null);
     setPdfUrl("");
     setSelectedTextFileName("");
+    setSelectedPhotoFileName("");
     setTextContent("");
+    setPhotoContent("");
     if (textFileInputRef.current) {
       textFileInputRef.current.value = "";
+    }
+    if (photoFileInputRef.current) {
+      photoFileInputRef.current.value = "";
     }
   };
 
@@ -274,7 +338,7 @@ function Hero() {
 
                 <button
                   className="bg-gradient-to-br from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 rounded-xl p-5 cursor-pointer transition-all flex flex-col items-center shadow-lg shadow-purple-500/10 hover:shadow-purple-500/30 border border-purple-500/30 hover:border-pink-400/50 transform hover:scale-105 duration-300"
-                  onClick={() => console.log("Photo to PDF clicked")}
+                  onClick={handlePhotoToPdfClick}
                 >
                   <div className="bg-white/10 p-4 rounded-full mb-4">
                     <svg
@@ -426,6 +490,166 @@ function Hero() {
                     }`}
                     onClick={convertTextToPdf}
                     disabled={!selectedTextFileName || isConverting}
+                  >
+                    {isConverting ? (
+                      <span className="flex items-center justify-center">
+                        <svg
+                          className="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
+                          xmlns="http://www.w3.org/2000/svg"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                        >
+                          <circle
+                            className="opacity-25"
+                            cx="12"
+                            cy="12"
+                            r="10"
+                            stroke="currentColor"
+                            strokeWidth="4"
+                          ></circle>
+                          <path
+                            className="opacity-75"
+                            fill="currentColor"
+                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                          ></path>
+                        </svg>
+                        Converting...
+                      </span>
+                    ) : (
+                      "Convert"
+                    )}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Photo to PDF Modal */}
+        {showPhotoToPdfModal && (
+          <div
+            className="fixed inset-0 bg-black/70 flex items-center justify-center z-50"
+            onClick={() => setShowPhotoToPdfModal(false)}
+          >
+            <div
+              className="bg-gray-800 border border-purple-500/30 rounded-xl p-8 w-full max-w-md transform transition-all shadow-2xl shadow-purple-500/20"
+              onClick={(e) => e.stopPropagation()}
+              style={{ backdropFilter: "blur(12px)" }}
+            >
+              <div className="flex justify-between items-center mb-6">
+                <h3 className="text-xl font-bold text-center bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-pink-500">
+                  Select Image
+                </h3>
+                <button
+                  className="text-gray-400 hover:text-white"
+                  onClick={() => setShowPhotoToPdfModal(false)}
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-5 w-5"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M6 18L18 6M6 6l12 12"
+                    />
+                  </svg>
+                </button>
+              </div>
+
+              <div className="space-y-6">
+                <div className="bg-gray-700/40 border-2 border-dashed border-purple-500/30 rounded-lg p-8 text-center">
+                  {selectedPhotoFileName ? (
+                    <div className="flex flex-col items-center">
+
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        className="h-12 w-12 mx-auto text-green-400 mb-2"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                        />
+                      </svg>
+                      <p className="text-gray-300 mb-2 font-medium">
+                        Image Selected:
+                      </p>
+                      <p className="text-purple-300 mb-4 text-lg">
+                        {selectedPhotoFileName}
+                      </p>
+                      <button
+                        className="bg-gray-600 hover:bg-gray-500 text-white px-6 py-2 rounded-full font-medium transition-all text-sm"
+                        onClick={() => {
+                          setSelectedPhotoFileName("");
+                          setPhotoContent("");
+                          photoFileInputRef.current.value = "";
+                        }}
+                      >
+                        Change Image
+                      </button>
+                    </div>
+                  ) : (
+                    <>
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        className="h-12 w-12 mx-auto text-purple-400 mb-4"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                        />
+                      </svg>
+                      <p className="text-gray-300 mb-2">
+                        Drag & drop your image here
+                      </p>
+                      <p className="text-gray-400 text-sm mb-4">or</p>
+                      <input
+                        type="file"
+                        ref={photoFileInputRef}
+                        className="hidden"
+                        accept="image/*"
+                        multiple={true}
+                        onChange={handlePhotoFileSelected}
+                      />
+                      <button
+                        className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white px-6 py-2 rounded-full font-medium transition-all"
+                        onClick={() => photoFileInputRef.current.click()}
+                      >
+                        Browse Images
+                      </button>
+                    </>
+                  )}
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <button
+                    className="bg-gray-700 hover:bg-gray-600 text-white py-2 rounded-lg transition-all"
+                    onClick={() => setShowPhotoToPdfModal(false)}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    className={`bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white py-2 rounded-lg transition-all ${
+                      !selectedPhotoFileName || isConverting
+                        ? "opacity-50 cursor-not-allowed"
+                        : ""
+                    }`}
+                    onClick={convertPhotoToPdf}
+                    disabled={!selectedPhotoFileName || isConverting}
                   >
                     {isConverting ? (
                       <span className="flex items-center justify-center">
