@@ -166,7 +166,8 @@ function Hero() {
   const handleViewPdf = () => {
     if (!pdfUrl) return;
     // Open PDF in a new tab
-    window.open(pdfUrl, "_blank");
+    // window.location.href = pdfUrl;
+    window.open(`/pdfviewer?content=${textContent}&contenttype=Text`, "_blank");
   };
 
   const resetPdfStates = () => {
