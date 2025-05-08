@@ -19,10 +19,10 @@ function Navbar() {
         </div>
         
         <div className="hidden md:flex space-x-8">
-          <a href="#home" className="relative hover:text-purple-400 transition-colors after:content-[''] after:absolute after:left-0 after:bottom-0 after:w-0 after:h-[2px] after:bg-purple-400 after:transition-all after:duration-300 hover:after:w-full">Home</a>
+          <a href="/home" className="relative hover:text-purple-400 transition-colors after:content-[''] after:absolute after:left-0 after:bottom-0 after:w-0 after:h-[2px] after:bg-purple-400 after:transition-all after:duration-300 hover:after:w-full">Home</a>
           <a href="#features" className="relative hover:text-purple-400 transition-colors after:content-[''] after:absolute after:left-0 after:bottom-0 after:w-0 after:h-[2px] after:bg-purple-400 after:transition-all after:duration-300 hover:after:w-full">Features</a>
           <a href="#tutorials" className="relative hover:text-purple-400 transition-colors after:content-[''] after:absolute after:left-0 after:bottom-0 after:w-0 after:h-[2px] after:bg-purple-400 after:transition-all after:duration-300 hover:after:w-full">Tutorials</a>
-          <a href="#about" className="relative hover:text-purple-400 transition-colors after:content-[''] after:absolute after:left-0 after:bottom-0 after:w-0 after:h-[2px] after:bg-purple-400 after:transition-all after:duration-300 hover:after:w-full">About</a>
+          <a href="/about" className="relative hover:text-purple-400 transition-colors after:content-[''] after:absolute after:left-0 after:bottom-0 after:w-0 after:h-[2px] after:bg-purple-400 after:transition-all after:duration-300 hover:after:w-full">About</a>
         </div>
         
         <div className="flex items-center space-x-4">
