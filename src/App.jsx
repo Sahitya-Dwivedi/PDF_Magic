@@ -4,6 +4,7 @@ import Navbar from "./components/navbar";
 import Home from "./pages/home";
 import About from "./pages/about";
 import Footer from "./components/footer";
+import PdfViewer from "./pages/PdfViewer";
 
 function App() {
   // Set document title to PDF Magic
@@ -17,6 +18,7 @@ function App() {
           <Route path="/" element={<Home />} />
           <Route path="/home" element={<Home />} />
           <Route path="/about" element={<About />} />
+          <Route path="/pdfviewer" element={<PdfViewer />} />
         </Routes>
         <Footer />
       </div>
