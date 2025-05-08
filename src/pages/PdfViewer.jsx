@@ -9,7 +9,7 @@ const PdfViewer = () => {
   console.log(pdfContentType);
   return (
     <PDFViewer width="100%" height="600" showToolbar={true}>
-      <MyDoc content={pdfContent} contentType={pdfContentType} />
+      <MyDoc content={JSON.parse(pdfContent)} contentType={pdfContentType} />
     </PDFViewer>
   );
 };
