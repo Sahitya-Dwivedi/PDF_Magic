@@ -28,7 +28,7 @@ function MyDoc({ content, contentType }) {
   ) : (
     <Document>
       <Page size="A4" style={styles.page}>
-        {content.map((img,i) => {
+        {content.map((img, i) => {
           return <Image src={img} style={styles.img} key={i} />;
         })}
       </Page>
