@@ -169,10 +169,15 @@ function Hero() {
     if (!pdfUrl) return;
     // Open PDF in a new tab
     // window.location.href = pdfUrl;
+    console.log(textContent.split("\n"));
     window.open(
       `/pdfviewer?content=${
-        contentType == "Text" ? textContent : JSON.stringify(photoContent)
-      }&contenttype=${contentType == "Text" ? "Text" : "Image"}`,
+        contentType == "Text"
+          ? JSON.stringify(textContent.split("\n"))
+          : JSON.stringify(photoContent)
+      }&contenttype=${
+        contentType == "Text" ? "Text" : "Image"
+      }&filename=${selectedTextFileName.replace(/\.[^/.]+$/, ".pdf")}`,
       "_blank"
     );
   };
