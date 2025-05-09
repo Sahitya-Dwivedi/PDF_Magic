@@ -168,8 +168,6 @@ function Hero() {
   const handleViewPdf = () => {
     if (!pdfUrl) return;
     // Open PDF in a new tab
-    // window.location.href = pdfUrl;
-    console.log(textContent.split("\n"));
     window.open(
       `/pdfviewer?content=${
         contentType == "Text"
