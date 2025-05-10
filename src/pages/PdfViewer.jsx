@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 
 const PdfViewer = () => {
+  document.title = "PDF Magic - PDF Viewer";
   const [content, setContent] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [scale, setScale] = useState(1);
