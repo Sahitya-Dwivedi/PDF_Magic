@@ -9,6 +9,11 @@ import PdfViewer from "./pages/PdfViewer";
 function App() {
   // Set document title to PDF Magic
   document.title = "PDF Magic";
+  // Set favicon
+  const favicon = document.getElementsByTagName("link")[0];
+  favicon.rel = "icon";
+  favicon.type = "image/x-icon";
+  favicon.href = "/public/pdf_magic_favicon.ico";
 
   return (
     <Router>
