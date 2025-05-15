@@ -181,6 +181,7 @@ function Hero() {
       });
       const data = await response.json();
       console.log(data);
+      console.log("data");
     };
     sendToBackend();
     window.open(
