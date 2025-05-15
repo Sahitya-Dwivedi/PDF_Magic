@@ -168,6 +168,21 @@ function Hero() {
   const handleViewPdf = () => {
     if (!pdfUrl) return;
     // Open PDF in a new tab
+    const sendToBackend = async () => {
+      const response = await fetch("/pdf", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          pdfUrl,
+          fileName: selectedTextFileName.replace(/\.[^/.]+$/, ".pdf"),
+        }),
+      });
+      const data = await response.json();
+      console.log(data);
+    };
+    sendToBackend();
     window.open(
       `/pdfviewer?content=${
         contentType == "Text"
