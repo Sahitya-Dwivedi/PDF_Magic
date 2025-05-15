@@ -6,8 +6,8 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.static("public"));
 
 app.post("/pdf", (req, res) => {
-  res.send("Hello World!");
-  console.log(req)
+  res.send({"Hello World!": "Hello World!"});
+  console.log("req")
 });
 
 app.listen(5000);
