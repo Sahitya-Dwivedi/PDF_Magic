@@ -7,7 +7,7 @@ export default defineConfig({
   plugins: [react(), tailwindcss()],
   server: {
     proxy: {
-      "/backend": {
+      "/pdf": {
         target: "http://localhost:5000",
         changeOrigin: true,
         secure: false,
