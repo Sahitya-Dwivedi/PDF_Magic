@@ -168,16 +168,17 @@ function Hero() {
   const handleViewPdf = () => {
     if (!pdfUrl) return;
     // Open PDF in a new tab
+    console.log("pdfBlob", pdfBlob);
     const sendToBackend = async () => {
-      const response = await fetch("/pdf", {
+      const response = await fetch("/api/pdf", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          pdfUrl,
+        body:{
+          pdfBlob: pdfBlob,
           fileName: selectedTextFileName.replace(/\.[^/.]+$/, ".pdf"),
-        }),
+        },
       });
       const data = await response.json();
       console.log(data);
