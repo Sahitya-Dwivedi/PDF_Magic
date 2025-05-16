@@ -13,7 +13,6 @@ const PdfViewer = () => {
     const pdfContent = pdf.get("content");
     const pdfName = pdf.get("filename");
 
-    console.log(pdfContent);
     try {
       setFileName(pdfName);
       const parsedContent = JSON.parse(pdfContent);
