@@ -171,13 +171,16 @@ function Hero() {
     const sendToBackend = async () => {
       const formData = new FormData();
       formData.append("pdfBlob", pdfBlob);
-      const response = await fetch("/api/pdf", {
+      await fetch("/api/pdf", {
         method: "POST",
         body: formData, // Send the raw blob
+      }).then((response) => {
+        if (response.ok) {
+          console.log("PDF sent to backend successfully");
+        } else {
+          console.error("Error sending PDF to backend");
+        }
       });
-      const data = await response.json();
-      console.log(data);
-      console.log("data");
     };
     sendToBackend();
     window.open(
