@@ -1,5 +1,124 @@
 import React, { useEffect, useState } from "react";
 
+// Color Dictionary
+const kColors = [
+  "#000000", // 0
+  "#ffffff", // 1
+  "#4c4c4c", // 2
+  "#808080", // 3
+  "#999999", // 4
+  "#c0c0c0", // 5
+  "#cccccc", // 6
+  "#e5e5e5", // 7
+  "#f2f2f2", // 8
+  "#008000", // 9
+  "#00ff00", // 10
+  "#bfffa0", // 11
+  "#ffd629", // 12
+  "#ff99cc", // 13
+  "#004080", // 14
+  "#9fc0e1", // 15
+  "#5580ff", // 16
+  "#a9c9fa", // 17
+  "#ff0080", // 18
+  "#800080", // 19
+  "#ffbfff", // 20
+  "#e45b21", // 21
+  "#ffbfaa", // 22
+  "#008080", // 23
+  "#ff0000", // 24
+  "#fdc59f", // 25
+  "#808000", // 26
+  "#bfbf00", // 27
+  "#824100", // 28
+  "#007256", // 29
+  "#008000", // 30
+  "#000080", // Last + 1
+  "#008080", // Last + 2
+  "#800080", // Last + 3
+  "#ff0000", // Last + 4
+  "#0000ff", // Last + 5
+  "#008000", // Last + 6
+  "#000000", // Last + 7
+];
+
+// Font Face Dictionary
+const kFontFaces = [
+  "QuickType,Arial,Helvetica,sans-serif", // 00 - QuickType - sans-serif variable font
+  "QuickType Condensed,Arial Narrow,Arial,Helvetica,sans-serif", // 01 - QuickType Condensed - thin sans-serif variable font
+  "QuickTypePi", // 02 - QuickType Pi
+  "QuickType Mono,Courier New,Courier,monospace", // 03 - QuickType Mono - san-serif fixed font
+  "OCR-A,Courier New,Courier,monospace", // 04 - OCR-A - OCR readable san-serif fixed font
+  "OCR B MT,Courier New,Courier,monospace", // 05 - OCR-B MT - OCR readable san-serif fixed font
+];
+
+// Font Style Dictionary
+const kFontStyles = [
+  // Face  Size Bold Italic  StyleID(Comment)
+  // ----- ---- ---- -----  -----------------
+  [0, 6, 0, 0], //00
+  [0, 8, 0, 0], //01
+  [0, 10, 0, 0], //02
+  [0, 12, 0, 0], //03
+  [0, 14, 0, 0], //04
+  [0, 18, 0, 0], //05
+  [0, 6, 1, 0], //06
+  [0, 8, 1, 0], //07
+  [0, 10, 1, 0], //08
+  [0, 12, 1, 0], //09
+  [0, 14, 1, 0], //10
+  [0, 18, 1, 0], //11
+  [0, 6, 0, 1], //12
+  [0, 8, 0, 1], //13
+  [0, 10, 0, 1], //14
+  [0, 12, 0, 1], //15
+  [0, 14, 0, 1], //16
+  [0, 18, 0, 1], //17
+  [0, 6, 1, 1], //18
+  [0, 8, 1, 1], //19
+  [0, 10, 1, 1], //20
+  [0, 12, 1, 1], //21
+  [0, 14, 1, 1], //22
+  [0, 18, 1, 1], //23
+  [1, 6, 0, 0], //24
+  [1, 8, 0, 0], //25
+  [1, 10, 0, 0], //26
+  [1, 12, 0, 0], //27
+  [1, 14, 0, 0], //28
+  [1, 18, 0, 0], //29
+  [1, 6, 1, 0], //30
+  [1, 8, 1, 0], //31
+  [1, 10, 1, 0], //32
+  [1, 12, 1, 0], //33
+  [1, 14, 1, 0], //34
+  [1, 18, 1, 0], //35
+  [1, 6, 0, 1], //36
+  [1, 8, 0, 1], //37
+  [1, 10, 0, 1], //38
+  [1, 12, 0, 1], //39
+  [1, 14, 0, 1], //40
+  [1, 18, 0, 1], //41
+  [2, 8, 0, 0], //42
+  [2, 10, 0, 0], //43
+  [2, 12, 0, 0], //44
+  [2, 14, 0, 0], //45
+  [2, 12, 0, 0], //46
+  [3, 8, 0, 0], //47
+  [3, 10, 0, 0], //48
+  [3, 12, 0, 0], //49
+  [4, 12, 0, 0], //50
+  [0, 9, 0, 0], //51
+  [0, 9, 1, 0], //52
+  [0, 9, 0, 1], //53
+  [0, 9, 1, 1], //54
+  [1, 9, 0, 0], //55
+  [1, 9, 1, 0], //56
+  [1, 9, 1, 1], //57
+  [4, 10, 0, 0], //58
+  [5, 10, 0, 0], //59
+  [5, 12, 0, 0], //60
+];
+
 const decodeText = (encoded) =>
   decodeURIComponent(encoded || "").replace(/%0D/g, "");
 
@@ -31,7 +150,7 @@ const PdfViewer = () => {
 
     fetchPdfData();
   }, []);
-  console.log("PDF Data:", pdfData); 
+  console.log("PDF Data:", pdfData);
 
   const handleZoomIn = () => setScale((prev) => Math.min(prev + 0.1, 2));
   const handleZoomOut = () => setScale((prev) => Math.max(prev - 0.1, 0.5));
@@ -48,14 +167,22 @@ const PdfViewer = () => {
     }
   };
 
-  // Function to convert color value to CSS color
-  const getTextColor = (clr) => {
-    if (clr === 0 || clr === undefined) {
-      return "black";
+  // Helper to get color from color dictionary, oc, or fallback
+  const getColorFromDict = (clr, oc) => {
+    if (typeof clr === "number" && clr >= 0 && clr < kColors.length) {
+      return kColors[clr];
     }
-    // Convert numeric color value to hex format
-    return `#${Number(clr).toString(16).padStart(6, "0")}`;
+    if (Array.isArray(oc) && oc.length === 3) {
+      return `rgb(${oc[0]},${oc[1]},${oc[2]})`;
+    }
+    if (typeof oc === "string") {
+      return oc;
+    }
+    return "#000000";
   };
+
+  // Function to convert color value to CSS color (for text)
+  const getTextColor = (clr, oc) => getColorFromDict(clr, oc);
 
   // Function to get text alignment class
   const getTextAlignmentClass = (alignment) => {
@@ -75,19 +202,29 @@ const PdfViewer = () => {
   // Helper constant for point to pixel conversion (1pt = 1.33333px at 96dpi)
   const PT_TO_PX = 96 / 72; // = 1.33333...
 
+  // Function to resolve TS (Text Style) array, supporting both direct array and style index
+  const resolveTS = (ts) => {
+    if (Array.isArray(ts)) return ts;
+    if (typeof ts === "number" && ts >= 0 && ts < kFontStyles.length) {
+      return kFontStyles[ts];
+    }
+    return undefined;
+  };
+
   // Function to get font size from TS array
   const getFontSize = (run) => {
-    if (run?.TS && run.TS.length >= 2 && run.TS[1]) {
-      // Convert point size to pixels for proper display
-      return `${run.TS[1] * PT_TO_PX}px`;
+    const ts = resolveTS(run?.TS);
+    if (ts && ts.length >= 2 && ts[1]) {
+      return `${ts[1] * PT_TO_PX}px`;
     }
     return "17px"; // Default font size if not specified
   };
 
   // Function to get numerical font size value (without 'px' suffix)
   const getNumericFontSize = (run) => {
-    if (run?.TS && run.TS.length >= 2 && run.TS[1]) {
-      return run.TS[1] * PT_TO_PX;
+    const ts = resolveTS(run?.TS);
+    if (ts && ts.length >= 2 && ts[1]) {
+      return ts[1] * PT_TO_PX;
     }
     return 17; // Default font size
   };
@@ -112,44 +249,27 @@ const PdfViewer = () => {
     };
   };
 
-  // Function to apply style based on S property
-  const getStyleFromS = (s) => {
-    // Default style or if S is not specified
-    if (s === undefined || s === -1) return {};
-
-    // Map S values to specific styles
-    // Common values in PDF structure:
-    // 0: Normal, 1: Bold, 2: Italic, 3: Bold-Italic, etc.
-    switch (s) {
-      case 0:
-        return { fontStyle: "normal", fontWeight: "normal" };
-      case 1:
-        return { fontWeight: "bold" };
-      case 2:
-        return { fontStyle: "italic" };
-      case 3:
-        return { fontStyle: "italic", fontWeight: "bold" };
-      case 4:
-        return { textDecoration: "underline" };
-      default:
-        return {};
-    }
+  // Function to apply style based on TS array (bold/italic from TS[2]/TS[3])
+  const getStyleFromTS = (ts, s) => {
+    const styleArr = resolveTS(ts);
+    if (!styleArr || styleArr.length < 4) return {};
+    return {
+      fontWeight: styleArr[2] === 1 ? "bold" : "normal",
+      fontStyle: styleArr[3] === 1 ? "italic" : "normal",
+      textDecoration: s === 4 ? "underline" : undefined, // S=4 for underline
+    };
   };
 
   // Optionally map font IDs to font families (customize as needed)
   const fontIdToFamily = (fontId) => {
-    // Example mapping, extend as needed
-    switch (fontId) {
-      case 0:
-        return "Helvetica, Arial, sans-serif";
-      case 1:
-        return "Times New Roman, Times, serif";
-      case 2:
-        return "Courier New, Courier, monospace";
-      // Add more mappings as needed
-      default:
-        return "Helvetica, Arial, sans-serif";
+    if (
+      typeof fontId === "number" &&
+      fontId >= 0 &&
+      fontId < kFontFaces.length
+    ) {
+      return kFontFaces[fontId];
     }
+    return "Helvetica, Arial, sans-serif";
   };
 
   if (loading) {
@@ -191,7 +311,7 @@ const PdfViewer = () => {
   if (currentPage?.Texts) {
     // Sort texts by y coordinate
     const sortedTexts = [...currentPage.Texts].sort((a, b) => a.y - b.y);
-  
+
     let currentParagraph = [];
     let lastY = null;
 
@@ -207,7 +327,7 @@ const PdfViewer = () => {
         return;
       }
 
-      if (lastY === null ) {
+      if (lastY === null) {
         // Same paragraph
         currentParagraph.push(text);
       } else {
@@ -230,12 +350,6 @@ const PdfViewer = () => {
   // Helper to convert PDF points to px with scaling
   const toPx = (pt) => pt * POINT_TO_PIXEL * DISPLAY_SCALE;
 
-  // Helper to get color from fill/stroke arrays (assume [r,g,b] 0-255)
-  const rgbArrToCss = (arr) =>
-    Array.isArray(arr) && arr.length === 3
-      ? `rgb(${arr[0]},${arr[1]},${arr[2]})`
-      : "black";
-
   // Render HLines, VLines, Fills, Fields, Boxsets
   const renderExtras = () => (
     <>
@@ -246,13 +360,16 @@ const PdfViewer = () => {
             key={`hline-${i}`}
             style={{
               position: "absolute",
-              left: toPx(line.x1),
-              top: toPx(line.y1),
-              width: Math.abs(toPx(line.x2) - toPx(line.x1)),
-              height: Math.max(line.w ? toPx(line.w) : 2, 1),
-              background: rgbArrToCss(line.oc || [0, 0, 0]),
+              left: toPx(line.x),
+              top: toPx(line.y),
+              width: line.l ? toPx(line.l) : 0,
+              height: line.w ? toPx(line.w) : 2,
+              background: getColorFromDict(line.clr, line.oc),
               opacity: 0.7,
               pointerEvents: "none",
+              borderRadius: 1,
+              borderBottom: line.dsh === 1 ? "1px dashed #000" : undefined,
+              border: line.dsh === 1 ? undefined : undefined,
             }}
           />
         ))}
@@ -263,13 +380,16 @@ const PdfViewer = () => {
             key={`vline-${i}`}
             style={{
               position: "absolute",
-              left: toPx(line.x1),
-              top: toPx(line.y1),
-              width: Math.max(line.w ? toPx(line.w) : 2, 1),
-              height: Math.abs(toPx(line.y2) - toPx(line.y1)),
-              background: rgbArrToCss(line.oc || [0, 0, 0]),
+              left: toPx(line.x),
+              top: toPx(line.y),
+              width: line.w ? toPx(line.w) : 2,
+              height: line.l ? toPx(line.l) : 0,
+              background: getColorFromDict(line.clr, line.oc),
               opacity: 0.7,
               pointerEvents: "none",
+              borderRadius: 1,
+              borderRight: line.dsh === 1 ? "1px dashed #000" : undefined,
+              border: line.dsh === 1 ? undefined : undefined,
             }}
           />
         ))}
@@ -284,7 +404,7 @@ const PdfViewer = () => {
               top: toPx(fill.y),
               width: toPx(fill.w),
               height: toPx(fill.h),
-              background: rgbArrToCss(fill.oc || [200, 200, 200]),
+              background: getColorFromDict(fill.clr, fill.oc),
               opacity: 0.3,
               pointerEvents: "none",
             }}
@@ -375,7 +495,7 @@ const PdfViewer = () => {
       </div>
 
       {/* PDF Content */}
-      <div className="overflow-auto p-6 text-center">
+      <div className="overflow-auto p-6 text-center" style={{ paddingTop: "80px" }}>
         <div
           className="relative transform origin-top inline-block"
           style={{ transform: `scale(${scale})` }}
@@ -396,34 +516,45 @@ const PdfViewer = () => {
             {currentPage?.Texts?.map((text, tIndex) => (
               <div
                 key={tIndex}
-                className={`font-['Helvetica',sans-serif] ${getTextAlignmentClass(text.A)}`}
+                className={`font-['Helvetica',sans-serif] ${getTextAlignmentClass(
+                  text.A
+                )}`}
                 style={{
                   position: "absolute",
                   left: toPx(text.x),
                   top: toPx(text.y),
-                  color: getTextColor(text.clr),
+                  color: getTextColor(text.clr, text.oc),
                   textAlign: text.A,
-                  width: text.w ? toPx(text.w) : "auto", // <--- "w" is being used here for width
+                  width: text.w ? toPx(text.w) : "auto",
                   // Optionally set background: "transparent"
                 }}
               >
-                {text.R?.map((run, rIndex) => (
-                  <span
-                    key={rIndex}
-                    style={{
-                      fontFamily:
-                        run?.TS && run.TS.length > 0
-                          ? fontIdToFamily(run.TS[0])
-                          : undefined,
-                      fontSize: getFontSize(run),
-                      lineHeight: getLineHeight(run),
-                      ...getStrokeStyle(text.sw),
-                      ...getStyleFromS(run.S),
-                    }}
-                  >
-                    {decodeText(run.T)}
-                  </span>
-                ))}
+                {text.R?.map((run, rIndex) => {
+                  const ts = resolveTS(run.TS);
+                  // Add rotation style if run.RA is present
+                  const rotationStyle =
+                    typeof run.RA === "number"
+                      ? { display: "inline-block", transform: `rotate(${run.RA}deg)` }
+                      : {};
+                  return (
+                    <span
+                      key={rIndex}
+                      style={{
+                        fontFamily:
+                          ts && ts.length > 0
+                            ? fontIdToFamily(ts[0])
+                            : undefined,
+                        fontSize: getFontSize(run),
+                        lineHeight: getLineHeight(run),
+                        ...getStrokeStyle(text.sw),
+                        ...getStyleFromTS(run.TS, run.S),
+                        ...rotationStyle,
+                      }}
+                    >
+                      {decodeText(run.T)}
+                    </span>
+                  );
+                })}
               </div>
             ))}
           </div>
