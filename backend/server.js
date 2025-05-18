@@ -22,6 +22,8 @@ app.post("/api/pdf", upload.single("pdfBlob"), (req, res) => {
 
   pdfParser.on("pdfParser_dataReady", (pdfData) => {
     pages = pdfData.Pages;
+    console.log("PDF data sent to client");
+    console.log(pdfData);
     res.json(pages);
   });
 
