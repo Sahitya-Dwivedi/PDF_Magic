@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-
+import { Link } from "react-router-dom";
 function Navbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -32,31 +32,31 @@ function Navbar() {
         </div>
 
         <div className="hidden md:flex space-x-8">
-          <a
-            href="/home"
+          <Link
+            to="/home"
             className="relative hover:text-purple-400 transition-colors after:content-[''] after:absolute after:left-0 after:bottom-0 after:w-0 after:h-[2px] after:bg-purple-400 after:transition-all after:duration-300 hover:after:w-full"
           >
             Home
-          </a>
-          <a
-            href="#features"
+          </Link>
+          <Link
+            to="#features"
             className="relative hover:text-purple-400 transition-colors after:content-[''] after:absolute after:left-0 after:bottom-0 after:w-0 after:h-[2px] after:bg-purple-400 after:transition-all after:duration-300 hover:after:w-full"
             hidden={window.location.pathname === "/pdfviewer" ? true : false}
           >
             Features
-          </a>
-          <a
-            href="#tutorials"
+          </Link>
+          <Link
+            to="#tutorials"
             className="relative hover:text-purple-400 transition-colors after:content-[''] after:absolute after:left-0 after:bottom-0 after:w-0 after:h-[2px] after:bg-purple-400 after:transition-all after:duration-300 hover:after:w-full"
           >
             Tutorials
-          </a>
-          <a
-            href="/about"
+          </Link>
+          <Link
+            to="/about"
             className="relative hover:text-purple-400 transition-colors after:content-[''] after:absolute after:left-0 after:bottom-0 after:w-0 after:h-[2px] after:bg-purple-400 after:transition-all after:duration-300 hover:after:w-full"
           >
             About
-          </a>
+          </Link>
         </div>
 
         <div className="flex items-center space-x-4">
@@ -105,30 +105,30 @@ function Navbar() {
       {/* Mobile menu */}
       {mobileMenuOpen && (
         <div className="md:hidden mt-4 pb-4 pt-2 space-y-3">
-          <a
-            href="#home"
+          <Link
+            to="#home"
             className="block px-4 py-2 hover:bg-gray-800 rounded-md relative after:content-[''] after:absolute after:left-0 after:bottom-0 after:w-0 after:h-[2px] after:bg-purple-400 after:transition-all after:duration-300 hover:after:w-full"
           >
             Home
-          </a>
-          <a
-            href="#features"
+          </Link>
+          <Link
+            to="#features"
             className="block px-4 py-2 hover:bg-gray-800 rounded-md relative after:content-[''] after:absolute after:left-0 after:bottom-0 after:w-0 after:h-[2px] after:bg-purple-400 after:transition-all after:duration-300 hover:after:w-full"
           >
             Features
-          </a>
-          <a
-            href="#tutorials"
+          </Link>
+          <Link
+            to="#tutorials"
             className="block px-4 py-2 hover:bg-gray-800 rounded-md relative after:content-[''] after:absolute after:left-0 after:bottom-0 after:w-0 after:h-[2px] after:bg-purple-400 after:transition-all after:duration-300 hover:after:w-full"
           >
             Tutorials
-          </a>
-          <a
-            href="#about"
+          </Link>
+          <Link
+            to="#about"
             className="block px-4 py-2 hover:bg-gray-800 rounded-md relative after:content-[''] after:absolute after:left-0 after:bottom-0 after:w-0 after:h-[2px] after:bg-purple-400 after:transition-all after:duration-300 hover:after:w-full"
           >
             About
-          </a>
+          </Link>
         </div>
       )}
     </nav>
