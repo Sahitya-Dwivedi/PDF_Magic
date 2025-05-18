@@ -136,6 +136,22 @@ const PdfViewer = () => {
     }
   };
 
+  // Optionally map font IDs to font families (customize as needed)
+  const fontIdToFamily = (fontId) => {
+    // Example mapping, extend as needed
+    switch (fontId) {
+      case 0:
+        return "Helvetica, Arial, sans-serif";
+      case 1:
+        return "Times New Roman, Times, serif";
+      case 2:
+        return "Courier New, Courier, monospace";
+      // Add more mappings as needed
+      default:
+        return "Helvetica, Arial, sans-serif";
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-screen bg-black">
@@ -158,7 +174,7 @@ const PdfViewer = () => {
   // Convert PDF point dimensions to pixels (1 point = 1/72 inch, screen is typically 96dpi)
   const POINT_TO_PIXEL = 96 / 72;
   // Scale factor to make PDF visible at reasonable size
-  const DISPLAY_SCALE = 20;
+  const DISPLAY_SCALE = 19;
 
   // Get page dimensions from PDF data
   const pageWidth = currentPage?.Width
@@ -376,37 +392,37 @@ const PdfViewer = () => {
           >
             {/* Render extras (lines, fills, fields, boxsets) */}
             {renderExtras()}
-            {paragraphs.map((paragraph, pIndex) => (
+            {/* Render each text absolutely using x/y */}
+            {currentPage?.Texts?.map((text, tIndex) => (
               <div
-                key={pIndex}
-                className={paragraph.length === 0 ? "h-4" : ""}
+                key={tIndex}
+                className={`font-['Helvetica',sans-serif] ${getTextAlignmentClass(text.A)}`}
+                style={{
+                  position: "absolute",
+                  left: toPx(text.x),
+                  top: toPx(text.y),
+                  color: getTextColor(text.clr),
+                  textAlign: text.A,
+                  width: text.w ? toPx(text.w) : "auto", // <--- "w" is being used here for width
+                  // Optionally set background: "transparent"
+                }}
               >
-                {paragraph.map((text, tIndex) => (
-                  <div
-                    key={`${pIndex}-${tIndex}`}
-                    className={`font-['Helvetica',sans-serif] ${getTextAlignmentClass(
-                      text.A
-                    )}`}
+                {text.R?.map((run, rIndex) => (
+                  <span
+                    key={rIndex}
                     style={{
-                      color: getTextColor(text.clr),
-                      textAlign: text.A,
+                      fontFamily:
+                        run?.TS && run.TS.length > 0
+                          ? fontIdToFamily(run.TS[0])
+                          : undefined,
+                      fontSize: getFontSize(run),
+                      lineHeight: getLineHeight(run),
+                      ...getStrokeStyle(text.sw),
+                      ...getStyleFromS(run.S),
                     }}
                   >
-                    {text.R?.map((run, rIndex) => (
-                      <span
-                        key={rIndex}
-                        style={{
-                          fontSize: getFontSize(run),
-                          lineHeight: getLineHeight(run),
-                          ...getStrokeStyle(text.sw),
-                          ...getStyleFromS(run.S),
-                        }}
-                      >
-                        {decodeText(run.T)}
-                      </span>
-                    ))}
-                    {tIndex < paragraph.length - 1 ? " " : ""}
-                  </div>
+                    {decodeText(run.T)}
+                  </span>
                 ))}
               </div>
             ))}
