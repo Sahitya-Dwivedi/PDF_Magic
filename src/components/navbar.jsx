@@ -9,8 +9,11 @@ function Navbar() {
   }, []);
 
   return (
-    <nav className="bg-gray-900/80 backdrop-blur-sm sticky top-0 z-50 px-6 py-4 shadow-lg">
-      <div className="container mx-auto flex justify-between items-center">
+    <nav
+      className="bg-gray-900/80 backdrop-blur-sm sticky top-0 z-50 px-6 shadow-lg"
+      style={{ height: "77.19px" }}
+    >
+      <div className="container mx-auto flex justify-between items-center h-full">
         <div className="flex items-center space-x-3">
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -46,12 +49,6 @@ function Navbar() {
             Features
           </Link>
           <Link
-            to="#tutorials"
-            className="relative hover:text-purple-400 transition-colors after:content-[''] after:absolute after:left-0 after:bottom-0 after:w-0 after:h-[2px] after:bg-purple-400 after:transition-all after:duration-300 hover:after:w-full"
-          >
-            Tutorials
-          </Link>
-          <Link
             to="/about"
             className="relative hover:text-purple-400 transition-colors after:content-[''] after:absolute after:left-0 after:bottom-0 after:w-0 after:h-[2px] after:bg-purple-400 after:transition-all after:duration-300 hover:after:w-full"
           >
@@ -60,9 +57,8 @@ function Navbar() {
         </div>
 
         <div className="flex items-center space-x-4">
-          <button className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white px-5 py-2 rounded-full font-medium transition-all transform hover:scale-105">
-            Sign In
-          </button>
+          {/* Substitute for removed Sign In button to preserve spacing */}
+          <div style={{ width: "120px" }} />
           <button
             className="md:hidden"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
