@@ -9,7 +9,6 @@ function Hero() {
   const [showTextToPdfModal, setShowTextToPdfModal] = useState(false);
   const [showPhotoToPdfModal, setShowPhotoToPdfModal] = useState(false);
   const [showPdfResultModal, setShowPdfResultModal] = useState(false);
-  const [contentType, setContentType] = useState("Text");
   // Animation state
   const [animateModal, setAnimateModal] = useState(false);
 
@@ -105,7 +104,6 @@ function Hero() {
     setIsConverting(true);
 
     try {
-      setContentType("Text");
       const blob = await pdf(
         <MyDoc content={textContent} contentType={"Text"} />
       ).toBlob();
@@ -129,7 +127,6 @@ function Hero() {
     setIsConverting(true);
 
     try {
-      setContentType("Image");
       const blob = await pdf(
         <MyDoc content={photoContent} contentType={"Image"} />
       ).toBlob();
@@ -183,16 +180,7 @@ function Hero() {
       });
     };
     sendToBackend();
-    window.open(
-      `/pdfviewer?content=${
-        contentType == "Text"
-          ? JSON.stringify(textContent.split("\n"))
-          : JSON.stringify(photoContent)
-      }&contenttype=${
-        contentType == "Text" ? "Text" : "Image"
-      }&filename=${selectedTextFileName.replace(/\.[^/.]+$/, ".pdf")}`,
-      "_blank"
-    );
+    window.open(`/pdfviewer`);
   };
 
   const resetPdfStates = () => {
