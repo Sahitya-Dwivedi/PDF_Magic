@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 
 // Color Dictionary
 const kColors = [
-  "#000000", // 0
+  "#212121", // 0
   "#ffffff", // 1
   "#4c4c4c", // 2
   "#808080", // 3
@@ -235,18 +235,6 @@ const PdfViewer = () => {
     // Line height is typically 120-150% of font size for good readability
     // Using 1.3 (130%) as a standard value
     return `${fontSize * 1.3}px`;
-  };
-
-  // Function to apply stroke width styles
-  const getStrokeStyle = (sw) => {
-    if (!sw || sw === 0) return {};
-
-    // Convert PDF stroke width to pixels
-    const strokeWidth = sw * PT_TO_PX;
-
-    return {
-      WebkitTextStroke: `${strokeWidth}px black`,
-    };
   };
 
   // Function to apply style based on TS array (bold/italic from TS[2]/TS[3])
@@ -495,7 +483,10 @@ const PdfViewer = () => {
       </div>
 
       {/* PDF Content */}
-      <div className="overflow-auto p-6 text-center" style={{ paddingTop: "80px" }}>
+      <div
+        className="overflow-auto p-6 text-center"
+        style={{ paddingTop: "80px" }}
+      >
         <div
           className="relative transform origin-top inline-block"
           style={{ transform: `scale(${scale})` }}
@@ -534,7 +525,10 @@ const PdfViewer = () => {
                   // Add rotation style if run.RA is present
                   const rotationStyle =
                     typeof run.RA === "number"
-                      ? { display: "inline-block", transform: `rotate(${run.RA}deg)` }
+                      ? {
+                          display: "inline-block",
+                          transform: `rotate(${run.RA}deg)`,
+                        }
                       : {};
                   return (
                     <span
@@ -546,7 +540,6 @@ const PdfViewer = () => {
                             : undefined,
                         fontSize: getFontSize(run),
                         lineHeight: getLineHeight(run),
-                        ...getStrokeStyle(text.sw),
                         ...getStyleFromTS(run.TS, run.S),
                         ...rotationStyle,
                       }}
