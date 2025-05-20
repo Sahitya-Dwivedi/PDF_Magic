@@ -127,19 +127,31 @@ const PdfViewer = () => {
   const [loading, setLoading] = useState(true);
   const [scale, setScale] = useState(1);
   const [currentPageIndex, setCurrentPageIndex] = useState(0);
+  const [fileName, setFileName] = useState("");
+  const [pdfno, setpdfno] = useState(0);
+
+  useEffect(() => {
+    document.title = "PDF Magic - PdfViewer";
+    let filename = new URLSearchParams(window.location.search).get("filename");
+    setpdfno(
+      parseInt(new URLSearchParams(window.location.search).get("pdfno"))
+    );
+    console.log("Filename from URL:", filename);
+    setFileName(filename);
+  }, []);
 
   useEffect(() => {
     async function fetchPdfData() {
       try {
         const response = await fetch("/api/pdf-results");
         if (!response.ok) {
-          console.warn("API didn't respond, using test data");
           setPdfData([]);
           return;
         }
 
-        const data = await response.json();
-        setPdfData(data.Pages || data);
+        const data = [await response.json()].flat(2);
+        console.log("PDF data received:", data);
+        setPdfData(data.Pages || data[pdfno]);
       } catch (error) {
         console.error("Error fetching PDF data:", error);
         setPdfData([]);
@@ -150,7 +162,6 @@ const PdfViewer = () => {
 
     fetchPdfData();
   }, []);
-  console.log("PDF Data:", pdfData);
 
   const handleZoomIn = () => setScale((prev) => Math.min(prev + 0.1, 2));
   const handleZoomOut = () => setScale((prev) => Math.max(prev - 0.1, 0.5));
@@ -443,38 +454,65 @@ const PdfViewer = () => {
     <div className="min-h-screen bg-black">
       {/* PDF Toolbar */}
       <div className="bg-gray-800 text-white p-4 shadow-md fixed top-0 left-0 right-0 z-10">
-        <div className="container mx-auto grid grid-cols-2">
-          <div className="space-x-4">
+        <div className="container mx-auto flex flex-row items-center justify-between">
+          {/* File name on the left, themed */}
+          <div className="flex items-center min-w-0">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="h-7 w-7 mr-2 text-purple-400"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              style={{ minWidth: 28 }}
+            >
+              <path
+                stroke="currentColor"
+                strokeWidth={2}
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"
+              />
+            </svg>
+            <span
+              className="truncate font-extrabold text-lg md:text-xl bg-clip-text text-transparent bg-gradient-to-r from-purple-400 via-pink-400 to-pink-500 select-text tracking-wide"
+              title={fileName}
+              style={{ userSelect: "text" }}
+            >
+              {fileName || "Untitled"}
+            </span>
+          </div>
+          {/* Navigation controls in the center */}
+          <div className="flex items-center space-x-4">
             <button
               onClick={prevPage}
               disabled={currentPageIndex === 0}
-              className="px-3 py-1 bg-gray-700 rounded hover:bg-gray-600 disabled:opacity-50 inline-block"
+              className="px-3 py-1 bg-gray-700 rounded hover:bg-gray-600 disabled:opacity-50"
             >
               Previous
             </button>
-            <div className="inline-block">
+            <span className="inline-block">
               Page {currentPageIndex + 1} of {totalPages}
-            </div>
+            </span>
             <button
               onClick={nextPage}
               disabled={currentPageIndex === totalPages - 1}
-              className="px-3 py-1 bg-gray-700 rounded hover:bg-gray-600 disabled:opacity-50 inline-block"
+              className="px-3 py-1 bg-gray-700 rounded hover:bg-gray-600 disabled:opacity-50"
             >
               Next
             </button>
           </div>
-
-          <div className="space-x-4 text-right">
+          {/* Zoom controls on the right */}
+          <div className="flex items-center space-x-4">
             <button
               onClick={handleZoomOut}
-              className="px-3 py-1 bg-gray-700 rounded hover:bg-gray-600 inline-block"
+              className="px-3 py-1 bg-gray-700 rounded hover:bg-gray-600"
             >
               -
             </button>
-            <div className="inline-block">{Math.round(scale * 100)}%</div>
+            <span className="inline-block">{Math.round(scale * 100)}%</span>
             <button
               onClick={handleZoomIn}
-              className="px-3 py-1 bg-gray-700 rounded hover:bg-gray-600 inline-block"
+              className="px-3 py-1 bg-gray-700 rounded hover:bg-gray-600"
             >
               +
             </button>
