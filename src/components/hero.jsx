@@ -23,6 +23,8 @@ function Hero() {
   // Processing state
   const [isConverting, setIsConverting] = useState(false);
 
+  // Pdf count state
+  const [pdfCount, setPdfCount] = useState(0);
   // Refs for file inputs
   const pdfFileInputRef = useRef(null);
   const textFileInputRef = useRef(null);
@@ -39,7 +41,35 @@ function Hero() {
   }, [showOptions]);
 
   const handleEditPdfClick = () => {
-    setShowEditPdfModal(true);
+    // Open file dialog for PDF selection
+    if (pdfFileInputRef.current) {
+      pdfFileInputRef.current.value = "";
+      pdfFileInputRef.current.click();
+    }
+  };
+
+  // Handle PDF file selection, send to backend, and open viewer
+  const handlePdfFileSelected = async (e) => {
+    const file = e.target.files && e.target.files[0];
+    const fileName = file && file.name;
+    if (!file) return;
+    // Send PDF blob to backend
+    const formData = new FormData();
+    formData.append("pdfBlob", file);
+    try {
+      await fetch("/api/pdf", {
+        method: "POST",
+        body: formData,
+      });
+      // Open the PDF viewer page
+      window.open(
+        `/pdfviewer?filename=${fileName}&pdfno=${pdfCount}`,
+        "_blank"
+      );
+      setPdfCount((prevCount) => prevCount + 1);
+    } catch {
+      alert("Failed to parse PDF. Please try again.");
+    }
   };
 
   const handleTextToPdfClick = () => {
@@ -50,14 +80,6 @@ function Hero() {
   const handlePhotoToPdfClick = () => {
     setShowOptions(false);
     setShowPhotoToPdfModal(true);
-  };
-
-  const handlePdfFileSelected = (e) => {
-    const file = e.target.files;
-    if (file) {
-      setSelectedTextFileName(file.name);
-      return file;
-    }
   };
 
   const handleTextFileSelected = (e) => {
@@ -180,7 +202,12 @@ function Hero() {
       });
     };
     sendToBackend();
-    window.open(`/pdfviewer`);
+    // Open the PDF viewer page
+    window.open(
+      `/pdfviewer?filename=${selectedTextFileName}&pdfno=${pdfCount}`,
+      "_blank"
+    );
+    setPdfCount((prevCount) => prevCount + 1);
   };
 
   const resetPdfStates = () => {
@@ -275,6 +302,13 @@ function Hero() {
               >
                 Upload PDF
               </button>
+              <input
+                type="file"
+                ref={pdfFileInputRef}
+                className="hidden"
+                accept=".pdf"
+                onChange={handlePdfFileSelected}
+              />
             </div>
           </div>
         </div>
