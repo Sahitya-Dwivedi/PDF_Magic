@@ -10,6 +10,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.static("public"));
 
 let pages = [];
+let pdfNo = 0;
 app.post("/api/pdf", upload.single("pdfBlob"), (req, res) => {
   const buffer = req.file.buffer;
 
@@ -21,10 +22,10 @@ app.post("/api/pdf", upload.single("pdfBlob"), (req, res) => {
   });
 
   pdfParser.on("pdfParser_dataReady", (pdfData) => {
-    pages = pdfData.Pages;
+    pages.push([pdfData.Pages, pdfNo]);
     console.log("PDF data sent to client");
-    console.log(pdfData);
-    res.json(pages);
+    console.log(pages);
+    res.json(pages, pdfNo);
   });
 
   // Read file from disk and parse it
@@ -35,5 +36,6 @@ app.get("/api/pdf-results", (req, res) => {
     return res.status(404).json({ error: "No PDF data available" });
   }
   res.json(pages);
+  pdfNo++;
 });
 app.listen(5000);
