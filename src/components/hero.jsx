@@ -39,6 +39,17 @@ function Hero() {
       setAnimateModal(false);
     }
   }, [showOptions]);
+  useEffect(() => {
+    (async () => {
+      await fetch("/api/clear-memo", { method: "POST" }).then((response) => {
+        if (response.ok) {
+          console.log("Memo cleared");
+        } else {
+          console.error("Error clearing memo");
+        }
+      });
+    })();
+  }, []);
 
   const handleEditPdfClick = () => {
     // Open file dialog for PDF selection
