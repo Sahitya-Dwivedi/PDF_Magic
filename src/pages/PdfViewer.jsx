@@ -161,7 +161,7 @@ const PdfViewer = () => {
     }
 
     fetchPdfData();
-  }, []);
+  }, [pdfno]);
 
   const handleZoomIn = () => setScale((prev) => Math.min(prev + 0.1, 2));
   const handleZoomOut = () => setScale((prev) => Math.max(prev - 0.1, 0.5));
