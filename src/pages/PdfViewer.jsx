@@ -149,9 +149,9 @@ const PdfViewer = () => {
           return;
         }
 
-        const data = [await response.json()].flat(2);
+        const data = [await response.json()].flat(1);
         console.log("PDF data received:", data);
-        setPdfData(data.Pages || data[pdfno]);
+        setPdfData(data.Pages || data[pdfno][0]);
       } catch (error) {
         console.error("Error fetching PDF data:", error);
         setPdfData([]);
