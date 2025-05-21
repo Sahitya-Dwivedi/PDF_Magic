@@ -38,5 +38,9 @@ app.get("/api/pdf-results", (req, res) => {
   res.json(pages);
   pdfNo++;
 });
-
+app.post("/api/clear-memo", (_, res) => {
+  pages = [];
+  pdfNo = 0;
+  res.json({ message: "Memo cleared" });
+});
 app.listen(5000);
