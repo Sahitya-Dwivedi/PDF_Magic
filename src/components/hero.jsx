@@ -54,22 +54,37 @@ function Hero() {
     const fileName = file && file.name;
     if (!file) return;
     // Send PDF blob to backend
-    const formData = new FormData();
-    formData.append("pdfBlob", file);
-    try {
-      await fetch("/api/pdf", {
-        method: "POST",
-        body: formData,
-      });
-      // Open the PDF viewer page
-      window.open(
-        `/pdfviewer?filename=${fileName}&pdfno=${pdfCount}`,
-        "_blank"
-      );
-      setPdfCount((prevCount) => prevCount + 1);
-    } catch {
-      alert("Failed to parse PDF. Please try again.");
-    }
+    const sendToBackend = async () => {
+      const formData = new FormData();
+      formData.append("pdfBlob", file);
+      try {
+        await fetch("/api/pdf", {
+          method: "POST",
+          body: formData,
+        })
+          .then((response) => {
+            if (!response.ok) {
+              throw new Error("Failed to send PDF to backend");
+            }
+            console.log("PDF sent to backend successfully");
+            console.time("PDF parse time");
+            console.log(response);
+            console.timeEnd("PDF parse time");
+          })
+          .then(() => {
+            // Open PDF in a new tab
+            window.open(
+              `/pdfviewer?filename=${fileName}&pdfno=${pdfCount}`,
+              "_blank"
+            );
+          });
+      } catch (error) {
+        console.error("Error sending PDF to backend:", error);
+      }
+    };
+    sendToBackend();
+    // Open the PDF viewer page
+    setPdfCount((prevCount) => prevCount + 1);
   };
 
   const handleTextToPdfClick = () => {
@@ -183,32 +198,35 @@ function Hero() {
       resetPdfStates();
     }, 500);
   };
-
-  const handleViewPdf = () => {
-    if (!pdfUrl) return;
+  function handleViewPdf() {
+    console.log("fd");
+    console.log("PDF URL:", pdfUrl);
+    // if (!pdfUrl) return;
     // Open PDF in a new tab
-    const sendToBackend = async () => {
-      const formData = new FormData();
-      formData.append("pdfBlob", pdfBlob);
-      await fetch("/api/pdf", {
-        method: "POST",
-        body: formData, // Send the raw blob
-      }).then((response) => {
-        if (response.ok) {
-          console.log("PDF sent to backend successfully");
-        } else {
-          console.error("Error sending PDF to backend");
-        }
-      });
-    };
-    sendToBackend();
+    // const sendToBackend = async () => {
+    //   const formData = new FormData();
+    //   formData.append("pdfBlob", pdfBlob);
+    //   let data = await fetch("/api/pdf", {
+    //     method: "POST",
+    //     body: formData, // Send the raw blob
+    //   });
+    //   let response = await data.json();
+    //   console.log(response);
+    //   if (response.ok) {
+    //     console.log(response);
+    //     console.log("PDF sent to backend successfully");
+    //   } else {
+    //     console.error("Error sending PDF to backend");
+    //   }
+    // };
+    // sendToBackend();
     // Open the PDF viewer page
-    window.open(
-      `/pdfviewer?filename=${selectedTextFileName}&pdfno=${pdfCount}`,
-      "_blank"
-    );
+    // window.open(
+    //   `/pdfviewer?filename=${selectedTextFileName}&pdfno=${pdfCount}`,
+    //   "_blank"
+    // );
     setPdfCount((prevCount) => prevCount + 1);
-  };
+  }
 
   const resetPdfStates = () => {
     // Clean up URL object to prevent memory leaks
