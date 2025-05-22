@@ -22,6 +22,7 @@ function Hero() {
 
   // Processing state
   const [isConverting, setIsConverting] = useState(false);
+  const [isParsingPdf, setIsParsingPdf] = useState(false);
 
   // Pdf count state
   const [pdfCount, setPdfCount] = useState(0);
@@ -64,6 +65,7 @@ function Hero() {
     const file = e.target.files && e.target.files[0];
     const fileName = file && file.name;
     if (!file) return;
+    setIsParsingPdf(true); // Show parsing overlay
     // Send PDF blob to backend
     const sendToBackend = async () => {
       const formData = new FormData();
@@ -74,13 +76,7 @@ function Hero() {
           body: formData,
         })
           .then((response) => {
-            if (!response.ok) {
-              throw new Error("Failed to send PDF to backend");
-            }
-            console.log("PDF sent to backend successfully");
-            console.time("PDF parse time");
-            console.log(response);
-            console.timeEnd("PDF parse time");
+            return response.json();
           })
           .then(() => {
             // Open PDF in a new tab
@@ -88,12 +84,17 @@ function Hero() {
               `/pdfviewer?filename=${fileName}&pdfno=${pdfCount}`,
               "_blank"
             );
+          })
+          .catch((error) => {
+            console.error("Error sending PDF to backend:", error);
           });
       } catch (error) {
         console.error("Error sending PDF to backend:", error);
+      } finally {
+        setIsParsingPdf(false); // Hide parsing overlay
       }
     };
-    sendToBackend();
+    await sendToBackend();
     // Open the PDF viewer page
     setPdfCount((prevCount) => prevCount + 1);
   };
@@ -259,6 +260,48 @@ function Hero() {
 
   return (
     <div className="flex-1">
+      {/* PDF Parsing Overlay */}
+      {isParsingPdf && (
+        <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-black bg-opacity-80">
+          <div className="flex flex-col items-center">
+            {/* Custom loader */}
+            <style>
+              {`
+              .loader {
+                position: relative;
+                width: 85px;
+                height: 50px;
+                background-repeat: no-repeat;
+                background-image: linear-gradient(#FFF 50px, transparent 0),
+                                  linear-gradient(#FFF 50px, transparent 0),
+                                  linear-gradient(#FFF 50px, transparent 0),
+                                  linear-gradient(#FFF 50px, transparent 0),
+                                  linear-gradient(#FFF 50px, transparent 0),
+                                  linear-gradient(#FFF 50px, transparent 0);
+                background-position: 0px center, 15px center, 30px center, 45px center, 60px center, 75px center, 90px center;
+                animation: rikSpikeRoll 0.65s linear infinite alternate;
+              }
+              @keyframes rikSpikeRoll {
+                0% { background-size: 10px 3px;}
+                16% { background-size: 10px 50px, 10px 3px, 10px 3px, 10px 3px, 10px 3px, 10px 3px}
+                33% { background-size: 10px 30px, 10px 50px, 10px 3px, 10px 3px, 10px 3px, 10px 3px}
+                50% { background-size: 10px 10px, 10px 30px, 10px 50px, 10px 3px, 10px 3px, 10px 3px}
+                66% { background-size: 10px 3px, 10px 10px, 10px 30px, 10px 50px, 10px 3px, 10px 3px}
+                83% { background-size: 10px 3px, 10px 3px,  10px 10px, 10px 30px, 10px 50px, 10px 3px}
+                100% { background-size: 10px 3px, 10px 3px, 10px 3px,  10px 10px, 10px 30px, 10px 50px}
+              }
+              `}
+            </style>
+            <span className="loader mb-8"></span>
+            <div className="text-xl font-semibold text-purple-200 mb-2">
+              Parsing your PDF...
+            </div>
+            <div className="text-gray-400 text-center max-w-xs">
+              This may take a few seconds for large or complex files.
+            </div>
+          </div>
+        </div>
+      )}
       <div className="container w-screen mx-auto px-6 py-16 flex flex-col items-center">
         <h1 className="text-5xl md:text-6xl font-bold mb-6 text-center">
           <span className="bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-pink-500">
