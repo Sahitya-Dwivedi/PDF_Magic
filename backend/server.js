@@ -23,9 +23,7 @@ app.post("/api/pdf", upload.single("pdfBlob"), (req, res) => {
 
   pdfParser.on("pdfParser_dataReady", (pdfData) => {
     pages.push([pdfData.Pages, pdfNo]);
-    console.log("PDF data sent to client");
-    console.log(pages);
-    res.json(pages, pdfNo);
+    res.json(pages);
   });
 
   // Read file from disk and parse it
