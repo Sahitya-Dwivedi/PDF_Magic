@@ -76,6 +76,11 @@ function Hero() {
           body: formData,
         })
           .then((response) => {
+            console.log("PDF sent to backend successfully");
+            if (!response.ok) {
+              throw new Error("Network response was not ok");
+            }
+            console.log("response", response);
             return response.json();
           })
           .then(() => {
