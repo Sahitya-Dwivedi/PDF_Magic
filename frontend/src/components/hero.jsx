@@ -42,13 +42,20 @@ function Hero() {
   }, [showOptions]);
   useEffect(() => {
     (async () => {
-      await fetch("/api/clear-memo", { method: "POST" }).then((response) => {
-        if (response.ok) {
-          console.log("Memo cleared");
-        } else {
-          console.error("Error clearing memo");
-        }
-      });
+      await fetch("/api/clear-memo", { method: "POST" })
+        .then((response) => {
+          if (response.ok) {
+            return response.json();
+          } else {
+            console.error("Error clearing memo");
+          }
+        })
+        .then((data) => {
+          console.log("Memo cleared successfully:", data);
+        })
+        .catch((error) => {
+          console.error("Error clearing memo:", error);
+        });
     })();
   }, []);
 
