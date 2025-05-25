@@ -87,10 +87,10 @@ function Hero() {
             if (!response.ok) {
               throw new Error("Network response was not ok");
             }
-            console.log("response", response);
             return response.json();
           })
-          .then(() => {
+          .then((data) => {
+            console.log("Response from backend:", data);
             // Open PDF in a new tab
             window.open(
               `/pdfviewer?filename=${fileName}&pdfno=${pdfCount}`,
@@ -225,30 +225,30 @@ function Hero() {
   function handleViewPdf() {
     console.log("fd");
     console.log("PDF URL:", pdfUrl);
-    // if (!pdfUrl) return;
+    if (!pdfUrl) return;
     // Open PDF in a new tab
-    // const sendToBackend = async () => {
-    //   const formData = new FormData();
-    //   formData.append("pdfBlob", pdfBlob);
-    //   let data = await fetch("/api/pdf", {
-    //     method: "POST",
-    //     body: formData, // Send the raw blob
-    //   });
-    //   let response = await data.json();
-    //   console.log(response);
-    //   if (response.ok) {
-    //     console.log(response);
-    //     console.log("PDF sent to backend successfully");
-    //   } else {
-    //     console.error("Error sending PDF to backend");
-    //   }
-    // };
-    // sendToBackend();
+    const sendToBackend = async () => {
+      const formData = new FormData();
+      formData.append("pdfBlob", pdfBlob);
+      let data = await fetch("/api/pdf", {
+        method: "POST",
+        body: formData, // Send the raw blob
+      });
+      let response = await data.json();
+      console.log(response);
+      if (response.ok) {
+        console.log(response);
+        console.log("PDF sent to backend successfully");
+      } else {
+        console.error("Error sending PDF to backend");
+      }
+    };
+    sendToBackend();
     // Open the PDF viewer page
-    // window.open(
-    //   `/pdfviewer?filename=${selectedTextFileName}&pdfno=${pdfCount}`,
-    //   "_blank"
-    // );
+    window.open(
+      `/pdfviewer?filename=${selectedTextFileName}&pdfno=${pdfCount}`,
+      "_blank"
+    );
     setPdfCount((prevCount) => prevCount + 1);
   }
 
