@@ -20,7 +20,7 @@ const PdfViewer = () => {
   useEffect(() => {
     async function fetchPdfData() {
       try {
-        const response = await fetch("/api/pdf-results");
+        const response = await fetch("/api/pdf-results",{method:"POST"});
         const data = await response.json();
         if (!response.ok) {
           throw new Error("Network response was not ok");
@@ -71,7 +71,33 @@ const PdfViewer = () => {
     return "#000";
   };
 
-  // Helper: get style from style_dict
+  // Helper function to parse PDF font names for better style detection
+  const parsePdfFontName = (pdfFontName) => {
+    // Split font name by hyphen or underscore (common in PDF fonts)
+    const parts = pdfFontName.split(/[-_]/);
+
+    // The first part is usually the font family (e.g., "Courier")
+    const fontFamily = parts[0] || 'sans-serif';
+
+    // Initialize CSS properties
+    let fontWeight = 'normal';
+    let fontStyle = 'normal';
+
+    // Look for weight and style keywords in the rest of the parts
+    parts.forEach(part => {
+      const lower = part.toLowerCase();
+      if (lower.includes('bold')) fontWeight = 'bold';
+      if (lower.includes('oblique') || lower.includes('italic')) fontStyle = 'italic';
+    });
+
+    return {
+      fontFamily,
+      fontWeight,
+      fontStyle,
+    };
+  };
+
+  // Helper: get style from style_dict with improved font name parsing
   const getStyleFromTS = (tsArr, page) => {
     let style = tsArr;
     if (typeof tsArr === "number" && Array.isArray(page?.style_dict)) {
@@ -79,11 +105,16 @@ const PdfViewer = () => {
     }
     if (Array.isArray(style) && style.length >= 4) {
       const [font, size, bold, italic] = style;
+      
+      // First apply style from font name parsing
+      const parsedFont = parsePdfFontName(font || '');
+      
+      // Then override with explicit bold/italic flags if set
       return {
-        fontFamily: font || "Helvetica, Arial, sans-serif",
+        fontFamily: parsedFont.fontFamily || "Helvetica, Arial, sans-serif",
         fontSize: size ? `${size * DISPLAY_SCALE}px` : "16px",
-        fontWeight: bold === 1 ? "bold" : "normal",
-        fontStyle: italic === 1 ? "italic" : "normal",
+        fontWeight: bold === 1 ? "bold" : parsedFont.fontWeight,
+        fontStyle: italic === 1 ? "italic" : parsedFont.fontStyle,
       };
     }
     return {};
