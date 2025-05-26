@@ -7,6 +7,7 @@ const PdfViewer = () => {
   const [currentPageIndex, setCurrentPageIndex] = useState(0);
   const [fileName, setFileName] = useState("");
   const [pdfno, setpdfno] = useState(0);
+  const [editedTexts, setEditedTexts] = useState([]);
 
   // Add ref for the SVG container
   const svgContainerRef = useRef(null);
@@ -127,16 +128,159 @@ const PdfViewer = () => {
     return {};
   };
 
-  // Toggle edit mode
-  const toggleEditMode = () => {
-    setEditMode(!editMode);
+  // Parse edited HTML back to original data format
+  const parseEditedHTML = (htmlString) => {
+    try {
+      // Create a temporary DOM element to parse the HTML
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(htmlString, "text/html");
+      const divElement = doc.body.firstChild;
+
+      if (!divElement) return null;
+
+      // Extract the text index from the class name
+      const classNames = divElement.className.split(" ");
+      const textIdxClass = classNames.find(
+        (cls) => cls.startsWith("page-text-") && !cls.includes("item") && !cls.includes("editable")
+      );
+      const textIdx = textIdxClass
+        ? parseInt(textIdxClass.replace("page-text-", ""))
+        : -1;
+
+      if (textIdx === -1) return null;
+
+      // Extract style information
+      const style = divElement.style;
+      const left = parseFloat(style.left);
+      const top = parseFloat(style.top);
+      const width = parseFloat(style.width);
+
+      // Extract color and convert RGB to hex
+      const colorRgb = style.color;
+      let colorHex = "#000000";
+      if (colorRgb) {
+        const rgbMatch = colorRgb.match(/rgb\((\d+),\s*(\d+),\s*(\d+)\)/);
+        if (rgbMatch) {
+          const r = parseInt(rgbMatch[1]);
+          const g = parseInt(rgbMatch[2]);
+          const b = parseInt(rgbMatch[3]);
+          colorHex = `#${(r << 16 | g << 8 | b).toString(16).padStart(6, "0")}`;
+        }
+      }
+
+      // Get color index from hex
+      let colorIdx = 0;
+      if (pdfData?.color_dict) {
+        for (const [colorInt, idx] of Object.entries(pdfData.color_dict)) {
+          const hex = `#${parseInt(colorInt).toString(16).padStart(6, "0")}`;
+          if (hex.toLowerCase() === colorHex.toLowerCase()) {
+            colorIdx = idx;
+            break;
+          }
+        }
+      }
+
+      // Extract alignment
+      const alignment = style.textAlign || "left";
+
+      // Extract text and style information from span
+      const spans = divElement.querySelectorAll("span");
+      const runs = Array.from(spans).map((span) => {
+        const spanStyle = span.style;
+        const fontFamily = spanStyle.fontFamily || "Helvetica";
+        const fontSize = parseFloat(spanStyle.fontSize) || 12;
+        const isBold = spanStyle.fontWeight === "bold" ? 1 : 0;
+        const isItalic = spanStyle.fontStyle === "italic" ? 1 : 0;
+
+        return {
+          T: span.textContent,
+          S: 0,
+          TS: [fontFamily, fontSize / DISPLAY_SCALE, isBold, isItalic],
+        };
+      });
+
+      // If no spans, create a run from the div's text content
+      if (runs.length === 0 && divElement.textContent) {
+        runs.push({
+          T: divElement.textContent,
+          S: 0,
+          TS: ["Helvetica", 12 / DISPLAY_SCALE, 0, 0],
+        });
+      }
+
+      // Construct the text object in the original format
+      const textObject = {
+        x: left / DISPLAY_SCALE,
+        y: top / DISPLAY_SCALE,
+        w: width / DISPLAY_SCALE,
+        clr: colorIdx,
+        A: alignment,
+        R: runs,
+      };
+
+      return { index: textIdx, textObject };
+    } catch (error) {
+      console.error("Error parsing edited HTML:", error);
+      return null;
+    }
+  };
+
+  // Save changes to pdfData
+  const saveChanges = () => {
+    if (editedTexts.length === 0) {
+      console.log("No changes to save");
+      return;
+    }
     
+    // Create a deep copy of the entire pdfData
+    const updatedPdfData = JSON.parse(JSON.stringify(pdfData));
+    
+    // Process each edited text HTML
+    editedTexts.forEach(htmlString => {
+      const parsed = parseEditedHTML(htmlString);
+      if (parsed && parsed.index >= 0) {
+        const { index, textObject } = parsed;
+        
+        // Update the specific text in the current page
+        if (updatedPdfData.pages[currentPageIndex].Texts[index]) {
+          updatedPdfData.pages[currentPageIndex].Texts[index] = textObject;
+        }
+      }
+    });
+    
+    // Update pdfData with the modified copy
+    setPdfData(updatedPdfData);
+    
+    // Clear edited texts array
+    setEditedTexts([]);
+    
+    console.log(updatedPdfData);
+    
+    // Optionally send the updated data to the backend
+    fetch('/api/save-pdf', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(updatedPdfData),
+    })
+    .then(response => response.json())
+    .then(data => console.log('Changes saved to server:', data))
+    .catch(error => console.error('Error saving changes:', error));
+  };
+
+  // Toggle edit mode with save functionality
+  const toggleEditMode = () => {
+    if (editMode) {
+      // Save changes when exiting edit mode
+      saveChanges();
+    }
+    setEditMode(!editMode);
   };
 
   // Render content (SVG with text overlay)
   const renderContent = () => (
     <div className="page-content-container relative" ref={svgContainerRef}>
-
       {/* Render SVGs from the svgs array as background */}
       {Array.isArray(currentPage?.svgs) && currentPage.svgs.length > 0 ? (
         currentPage.svgs.map((svg, idx) => (
@@ -175,8 +319,11 @@ const PdfViewer = () => {
           currentPage.Texts.map((text, idx) => (
             <div
               key={`text-overlay-${idx}`}
-              className={`page-text-item page-text-${idx} ${editMode ? 'page-text-editable' : ''}`}
+              className={`page-text-item page-text-${idx} ${
+                editMode ? "page-text-editable" : ""
+              }`}
               contentEditable={editMode}
+              suppressContentEditableWarning={true}
               style={{
                 position: "absolute",
                 left: toPx(text.x),
@@ -197,6 +344,7 @@ const PdfViewer = () => {
               }}
               onBlur={(e) => {
                 if (editMode) {
+                  setEditedTexts([...editedTexts, e.currentTarget.outerHTML]);
                   console.log("Text edited:", e.currentTarget.outerHTML);
                 }
               }}
