@@ -25,3 +25,6 @@ dist-ssr
 
 # Dependency directories
 requirements.txt
+
+# Python cache
+__pycache__/*
