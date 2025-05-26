@@ -149,61 +149,32 @@ const PdfViewer = () => {
   // Helper: convert PDF points to px (if needed)
   const toPx = (pt) => pt * DISPLAY_SCALE;
 
-  // Render HLines, VLines, Fills
-  const renderExtras = () => (
+  // Render content (SVG only)
+  const renderContent = () => (
     <>
-      {Array.isArray(currentPage?.HLines) &&
-        currentPage.HLines.map((line, i) => (
+      {/* Render SVGs from the svgs array */}
+      {Array.isArray(currentPage?.svgs) && currentPage.svgs.length > 0 ? (
+        currentPage.svgs.map((svg, idx) => (
           <div
-            key={`hline-${i}`}
+            key={`svg-${idx}`}
+            dangerouslySetInnerHTML={{ __html: svg.svg_content }}
             style={{
               position: "absolute",
-              left: toPx(line.x),
-              top: toPx(line.y),
-              width: toPx(line.l),
-              height: toPx(line.w || 2),
-              background: colorIdxToHex(line.clr),
-              opacity: 0.7,
+              left: 0,
+              top: 0,
+              width: "100%",
+              height: "100%",
               pointerEvents: "none",
-              borderRadius: 1,
-              borderBottom: line.dsh === 1 ? "1px dashed #000" : undefined,
+              transform: `scale(${DISPLAY_SCALE})`,
+              transformOrigin: "top left",
             }}
           />
-        ))}
-      {Array.isArray(currentPage?.VLines) &&
-        currentPage.VLines.map((line, i) => (
-          <div
-            key={`vline-${i}`}
-            style={{
-              position: "absolute",
-              left: toPx(line.x),
-              top: toPx(line.y),
-              width: toPx(line.w || 2),
-              height: toPx(line.l),
-              background: colorIdxToHex(line.clr),
-              opacity: 0.7,
-              pointerEvents: "none",
-              borderRadius: 1,
-              borderRight: line.dsh === 1 ? "1px dashed #000" : undefined,
-            }}
-          />
-        ))}
-      {Array.isArray(currentPage?.Fills) &&
-        currentPage.Fills.map((fill, i) => (
-          <div
-            key={`fill-${i}`}
-            style={{
-              position: "absolute",
-              left: toPx(fill.x),
-              top: toPx(fill.y),
-              width: toPx(fill.w),
-              height: toPx(fill.h),
-              background: colorIdxToHex(fill.clr),
-              opacity: 0.3,
-              pointerEvents: "none",
-            }}
-          />
-        ))}
+        ))
+      ) : (
+        <div className="flex items-center justify-center h-full">
+          <div className="text-lg text-gray-500">No SVG content available</div>
+        </div>
+      )}
     </>
   );
 
@@ -273,74 +244,27 @@ const PdfViewer = () => {
           </div>
         </div>
       </div>
-      {/* PDF Content */}
+      
+      {/* PDF Content (SVG only) */}
       <div
         className="overflow-auto p-6 text-center"
         style={{ paddingTop: "80px" }}
       >
-        <div
-          className="relative transform origin-top inline-block"
-          style={{ transform: `scale(${scale})` }}
-        >
+        <div className="flex justify-center">
           <div
-            className="bg-white shadow-lg rounded-sm overflow-hidden inline-block"
-            style={{
-              width: `${pageWidth * DISPLAY_SCALE}px`,
-              minHeight: `${pageHeight * DISPLAY_SCALE}px`,
-              position: "relative",
-            }}
+            className="relative transform origin-top inline-block mx-2 mb-6"
+            style={{ transform: `scale(${scale})` }}
           >
-            {/* Render extras (lines, fills, etc) */}
-            {renderExtras()}
-            {/* Render Texts */}
-            {currentPage?.Texts?.map((text, idx) => (
-              <div
-                key={idx}
-                style={{
-                  position: "absolute",
-                  left: toPx(text.x),
-                  top: toPx(text.y),
-                  width: toPx(text.w),
-                  color: colorIdxToHex(text.clr),
-                  textAlign: text.A || "left",
-                  whiteSpace: "pre",
-                  pointerEvents: "auto",
-                  userSelect: "text",
-                }}
-              >
-                {text.R?.map((run, rIdx) => (
-                  <span
-                    key={rIdx}
-                    style={{
-                      ...getStyleFromTS(run.TS, currentPage),
-                    }}
-                  >
-                    {run.T}
-                  </span>
-                ))}
-              </div>
-            ))}
-            {/* Render images */}
-            {currentPage?.images?.map((img, idx) => (
-              <img
-                key={idx}
-                src={`data:image/${img.ext};base64,${img.base64}`}
-                alt={`img-${img.xref}`}
-                style={{
-                  position: "absolute",
-                  left: 40,
-                  top: 40 + idx * (img.height * DISPLAY_SCALE + 10),
-                  width: img.width * DISPLAY_SCALE,
-                  height: img.height * DISPLAY_SCALE,
-                  boxShadow: "0 2px 8px rgba(0,0,0,0.15)",
-                  background: "#eee",
-                }}
-              />
-            ))}
-            {/* Optionally, render font info */}
-            {/* <pre style={{position:"absolute",bottom:0,left:0,background:"#fff8",fontSize:12}}>
-              {JSON.stringify(currentPage.fonts, null, 2)}
-            </pre> */}
+            <div
+              className="bg-white shadow-lg rounded-sm overflow-hidden inline-block"
+              style={{
+                width: `${pageWidth * DISPLAY_SCALE}px`,
+                minHeight: `${pageHeight * DISPLAY_SCALE}px`,
+                position: "relative",
+              }}
+            >
+              {renderContent()}
+            </div>
           </div>
         </div>
       </div>
