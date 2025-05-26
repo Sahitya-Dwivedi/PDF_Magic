@@ -33,8 +33,9 @@ async def parse_pdf(pdfBlob: UploadFile = File(...)):
         for page_num in range(len(doc)):
             page = doc[page_num]
             width, height = float(page.rect.width), float(page.rect.height)
+            style_dict = []
             
-            # --- Extract SVGs only ---
+            # --- Extract SVGs ---
             svgs = []
             try:
                 # Get whole page as SVG
@@ -49,14 +50,65 @@ async def parse_pdf(pdfBlob: UploadFile = File(...)):
             except Exception as e:
                 print(f"Error extracting SVG for page {page_num+1}: {e}")
             
-            # --- Add page elements to page object (SVG-focused) ---
+            # --- Extract text for overlay ---
+            Texts = []
+            for block in page.get_text("dict")["blocks"]:
+                if block["type"] == 0:  # Text block
+                    for line in block["lines"]:
+                        for span in line["spans"]:
+                            # Get precise text positioning from bbox
+                            x0, y0, x1, y1 = map(float, span["bbox"])
+                            
+                            # Handle font formatting
+                            font = span["font"]
+                            size = float(span["size"])
+                            
+                            # Enhanced style detection
+                            flags = span.get("flags", 0)
+                            font_name = span.get("font", "")
+                            font_lower = font_name.lower()
+                            
+                            # Font style detection
+                            bold = 1 if ((flags & 2) != 0 or 
+                                        "bold" in font_lower or 
+                                        "black" in font_lower) else 0
+                                        
+                            italic = 1 if ((flags & 1) != 0 or 
+                                        "italic" in font_lower or 
+                                        "oblique" in font_lower) else 0
+                            
+                            # Get color index
+                            clr_idx = get_color_index(span["color"], color_dict)
+                            
+                            # Create style array
+                            style = [font, size, bold, italic]
+                            if style not in style_dict:
+                                style_dict.append(style)
+                            
+                            # Create text run
+                            run = {
+                                "T": span["text"],
+                                "S": 0,
+                                "TS": style
+                            }
+                            
+                            # Create text object
+                            Texts.append({
+                                "x": x0,
+                                "y": y0,
+                                "w": x1 - x0,
+                                "clr": clr_idx,
+                                "A": "left",
+                                "R": [run]
+                            })
+            
+            # --- Add page elements to page object ---
             pdf_info["pages"].append({
                 "page_number": page_num + 1,
                 "Width": width,
                 "Height": height,
                 "svgs": svgs,
-                # Keep minimal info for compatibility
-                "Texts": [],
+                "Texts": Texts,  # Include text data for overlay
                 "images": [],
                 "fonts": [],
                 "HLines": [],
@@ -64,7 +116,7 @@ async def parse_pdf(pdfBlob: UploadFile = File(...)):
                 "Fills": [],
                 "Fields": [],
                 "Boxsets": [],
-                "style_dict": []
+                "style_dict": style_dict
             })
         
         # Add to pdfData array and return result
@@ -76,6 +128,10 @@ async def parse_pdf(pdfBlob: UploadFile = File(...)):
 @app.post("/api/pdf-results")
 async def get_pdf_results():
     return pdfData
+
+@app.post("/api/save-pdf")
+async def savePdf(req):
+    print(req.body)
 
 @app.post("/api/clear-memo")
 async def clear_memo():
