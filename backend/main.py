@@ -39,7 +39,8 @@ async def parse_pdf(pdfBlob: UploadFile = File(...)):
             svgs = []
             try:
                 # Get whole page as SVG
-                page_svg = page.get_svg_image(text_as_path=False)
+                page_svg = page.get_svg_image(text_as_path=False)   
+                page_svg = page_svg.replace("text","text hidden")
                 if page_svg:
                     svgs.append({
                         "type": "page",
