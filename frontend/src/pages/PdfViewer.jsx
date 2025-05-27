@@ -6,7 +6,6 @@ const PdfViewer = () => {
   const [scale, setScale] = useState(1);
   const [currentPageIndex, setCurrentPageIndex] = useState(0);
   const [fileName, setFileName] = useState("");
-  const [pdfno, setpdfno] = useState(0);
   const [editedTexts, setEditedTexts] = useState([]);
 
   // Add ref for the SVG container
@@ -16,26 +15,41 @@ const PdfViewer = () => {
   const [editMode, setEditMode] = useState(false);
 
   useEffect(() => {
-    document.title = "PDF Magic - PdfViewer";
-    let filename = new URLSearchParams(window.location.search).get("filename");
-    setpdfno(
-      parseInt(new URLSearchParams(window.location.search).get("pdfno"))
-    );
-    setFileName(filename);
-  }, []);
+    document.title = "PDF Magic - PDF Viewer";
 
-  useEffect(() => {
     async function fetchPdfData() {
       try {
+        // Get PDF number from URL parameters first
+        const urlParams = new URLSearchParams(window.location.search);
+        const urlName = urlParams.get("filename");
+        const pdfNumber = urlParams.get("pdfno");
+        setFileName(urlName || "Untitled PDF");
+
+        // Parse PDF number
+        let pdfIndex = 0;
+        if (pdfNumber) {
+          const parsedPdfNo = parseInt(pdfNumber);
+          if (!isNaN(parsedPdfNo)) {
+            pdfIndex = parsedPdfNo;
+          } else {
+            console.error("Invalid pdfno parameter in URL");
+          }
+        } else {
+          console.error("pdfno parameter not found in URL");
+        }
+
+        // Now fetch the data with the correct index
         const response = await fetch("/api/pdf-results", { method: "POST" });
         const data = await response.json();
         if (!response.ok) {
           throw new Error("Network response was not ok");
         }
+
         // Handle both array and object response
         let pdfInfo = null;
+
         if (Array.isArray(data)) {
-          if (data.length > 0) pdfInfo = data[pdfno];
+          if (data.length > 0) pdfInfo = data[pdfIndex];
         } else if (data?.pages) {
           pdfInfo = data;
         }
@@ -47,9 +61,17 @@ const PdfViewer = () => {
         setLoading(false);
       }
     }
+
     fetchPdfData();
-  }, [pdfno]);
-  console.log(pdfData);
+  }, []); // Only run once on mount
+  console.log("PDF Data:", pdfData);
+  
+  useEffect(() => {
+    if (pdfData === null) {
+      alert("No PDF data found. Please check the URL parameters.");
+    }
+  }, [pdfData]);
+  // Handle zoom in and out
 
   const handleZoomIn = () => setScale((prev) => Math.min(prev + 0.1, 2));
   const handleZoomOut = () => setScale((prev) => Math.max(prev - 0.1, 0.5));
@@ -233,7 +255,6 @@ const PdfViewer = () => {
   // Save changes to pdfData
   const saveChanges = () => {
     if (editedTexts.length === 0) {
-      console.log("No changes to save");
       return;
     }
 
@@ -259,8 +280,6 @@ const PdfViewer = () => {
     // Clear edited texts array
     setEditedTexts([]);
 
-    console.log(updatedPdfData);
-
     // Optionally send the updated data to the backend
     fetch("/api/save-pdf", {
       method: "POST",
@@ -270,7 +289,7 @@ const PdfViewer = () => {
       body: JSON.stringify(updatedPdfData),
     })
       .then((response) => response.json())
-      .then((data) => console.log("Changes saved to server:", data))
+      .then((data) => data)
       .catch((error) => console.error("Error saving changes:", error));
   };
 
@@ -288,7 +307,7 @@ const PdfViewer = () => {
     <div className="page-content-container relative" ref={svgContainerRef}>
       {/* Render SVGs from the svgs array as background */}
       {Array.isArray(currentPage?.svgs) && currentPage.svgs.length > 0 ? (
-        currentPage.svgs.map((svg, idx) =>
+        currentPage.svgs.map((svg, idx) => (
           <div
             key={`svg-${idx}`}
             className="page-svg-container"
@@ -304,7 +323,7 @@ const PdfViewer = () => {
               zIndex: 1,
             }}
           />
-        )
+        ))
       ) : (
         <div className="page-no-svg-message flex items-center justify-center h-full">
           <div className="text-lg text-gray-500">No SVG content available</div>
@@ -349,7 +368,6 @@ const PdfViewer = () => {
               onBlur={(e) => {
                 if (editMode) {
                   setEditedTexts([...editedTexts, e.currentTarget.outerHTML]);
-                  console.log("Text edited:", e.currentTarget.outerHTML);
                 }
               }}
             >
