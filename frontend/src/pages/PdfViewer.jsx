@@ -35,7 +35,7 @@ const PdfViewer = () => {
         // Handle both array and object response
         let pdfInfo = null;
         if (Array.isArray(data)) {
-          if (data.length > 0) pdfInfo = data[0];
+          if (data.length > 0) pdfInfo = data[pdfno];
         } else if (data?.pages) {
           pdfInfo = data;
         }
@@ -141,7 +141,10 @@ const PdfViewer = () => {
       // Extract the text index from the class name
       const classNames = divElement.className.split(" ");
       const textIdxClass = classNames.find(
-        (cls) => cls.startsWith("page-text-") && !cls.includes("item") && !cls.includes("editable")
+        (cls) =>
+          cls.startsWith("page-text-") &&
+          !cls.includes("item") &&
+          !cls.includes("editable")
       );
       const textIdx = textIdxClass
         ? parseInt(textIdxClass.replace("page-text-", ""))
@@ -164,7 +167,9 @@ const PdfViewer = () => {
           const r = parseInt(rgbMatch[1]);
           const g = parseInt(rgbMatch[2]);
           const b = parseInt(rgbMatch[3]);
-          colorHex = `#${(r << 16 | g << 8 | b).toString(16).padStart(6, "0")}`;
+          colorHex = `#${((r << 16) | (g << 8) | b)
+            .toString(16)
+            .padStart(6, "0")}`;
         }
       }
 
@@ -231,42 +236,42 @@ const PdfViewer = () => {
       console.log("No changes to save");
       return;
     }
-    
+
     // Create a deep copy of the entire pdfData
     const updatedPdfData = JSON.parse(JSON.stringify(pdfData));
-    
+
     // Process each edited text HTML
-    editedTexts.forEach(htmlString => {
+    editedTexts.forEach((htmlString) => {
       const parsed = parseEditedHTML(htmlString);
       if (parsed && parsed.index >= 0) {
         const { index, textObject } = parsed;
-        
+
         // Update the specific text in the current page
         if (updatedPdfData.pages[currentPageIndex].Texts[index]) {
           updatedPdfData.pages[currentPageIndex].Texts[index] = textObject;
         }
       }
     });
-    
+
     // Update pdfData with the modified copy
     setPdfData(updatedPdfData);
-    
+
     // Clear edited texts array
     setEditedTexts([]);
-    
+
     console.log(updatedPdfData);
-    
+
     // Optionally send the updated data to the backend
-    fetch('/api/save-pdf', {
-      method: 'POST',
+    fetch("/api/save-pdf", {
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
       },
       body: JSON.stringify(updatedPdfData),
     })
-    .then(response => response.json())
-    .then(data => console.log('Changes saved to server:', data))
-    .catch(error => console.error('Error saving changes:', error));
+      .then((response) => response.json())
+      .then((data) => console.log("Changes saved to server:", data))
+      .catch((error) => console.error("Error saving changes:", error));
   };
 
   // Toggle edit mode with save functionality
@@ -283,7 +288,7 @@ const PdfViewer = () => {
     <div className="page-content-container relative" ref={svgContainerRef}>
       {/* Render SVGs from the svgs array as background */}
       {Array.isArray(currentPage?.svgs) && currentPage.svgs.length > 0 ? (
-        currentPage.svgs.map((svg, idx) => (
+        currentPage.svgs.map((svg, idx) =>
           <div
             key={`svg-${idx}`}
             className="page-svg-container"
@@ -299,7 +304,7 @@ const PdfViewer = () => {
               zIndex: 1,
             }}
           />
-        ))
+        )
       ) : (
         <div className="page-no-svg-message flex items-center justify-center h-full">
           <div className="text-lg text-gray-500">No SVG content available</div>
@@ -332,7 +337,6 @@ const PdfViewer = () => {
                 color: colorIdxToHex(text.clr),
                 textAlign: text.A || "left",
                 whiteSpace: "pre",
-                background: "white", // White background
                 padding: "2px",
                 borderRadius: "2px",
                 boxShadow: editMode
