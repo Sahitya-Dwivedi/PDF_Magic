@@ -27,4 +27,4 @@ dist-ssr
 requirements.txt
 
 # Python cache
-__pycache__/*
+__pycache__/
