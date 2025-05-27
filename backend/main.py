@@ -124,6 +124,7 @@ async def parse_pdf(pdfBlob: UploadFile = File(...)):
         pdfData.append(pdf_info)
         return pdf_info
     except Exception as e:
+        pdfData.append({"error": str(e)})
         return {"error": str(e)}
 
 @app.post("/api/pdf-results")
