@@ -65,12 +65,7 @@ const PdfViewer = () => {
     fetchPdfData();
   }, []); // Only run once on mount
   console.log("PDF Data:", pdfData);
-  
-  useEffect(() => {
-    if (pdfData === null) {
-      alert("No PDF data found. Please check the URL parameters.");
-    }
-  }, [pdfData]);
+
   // Handle zoom in and out
 
   const handleZoomIn = () => setScale((prev) => Math.min(prev + 0.1, 2));
@@ -150,102 +145,36 @@ const PdfViewer = () => {
     return {};
   };
 
-  // Parse edited HTML back to original data format
+  // Modified parseEditedHTML function to handle span-level edits
   const parseEditedHTML = (htmlString) => {
     try {
       // Create a temporary DOM element to parse the HTML
       const parser = new DOMParser();
       const doc = parser.parseFromString(htmlString, "text/html");
-      const divElement = doc.body.firstChild;
+      const spanElement = doc.body.firstChild;
 
-      if (!divElement) return null;
+      if (!spanElement) return null;
 
-      // Extract the text index from the class name
-      const classNames = divElement.className.split(" ");
-      const textIdxClass = classNames.find(
-        (cls) =>
-          cls.startsWith("page-text-") &&
-          !cls.includes("item") &&
-          !cls.includes("editable")
-      );
-      const textIdx = textIdxClass
-        ? parseInt(textIdxClass.replace("page-text-", ""))
-        : -1;
+      // Extract the parent text index and run index from class names
+      const classNames = spanElement.className.split(" ");
+      const runIdxClass = classNames.find((cls) => cls.startsWith("page-text-run-"));
+      const runIdx = runIdxClass ? parseInt(runIdxClass.replace("page-text-run-", "")) : -1;
 
-      if (textIdx === -1) return null;
+      // Get parent text element class name from the data attribute
+      const parentTextIdx = spanElement.getAttribute("data-parent-idx");
+      const textIdx = parentTextIdx ? parseInt(parentTextIdx) : -1;
 
-      // Extract style information
-      const style = divElement.style;
-      const left = parseFloat(style.left);
-      const top = parseFloat(style.top);
-      const width = parseFloat(style.width);
+      if (textIdx === -1 || runIdx === -1) return null;
 
-      // Extract color and convert RGB to hex
-      const colorRgb = style.color;
-      let colorHex = "#000000";
-      if (colorRgb) {
-        const rgbMatch = colorRgb.match(/rgb\((\d+),\s*(\d+),\s*(\d+)\)/);
-        if (rgbMatch) {
-          const r = parseInt(rgbMatch[1]);
-          const g = parseInt(rgbMatch[2]);
-          const b = parseInt(rgbMatch[3]);
-          colorHex = `#${((r << 16) | (g << 8) | b)
-            .toString(16)
-            .padStart(6, "0")}`;
-        }
-      }
+      // Extract the updated text content
+      const newText = spanElement.textContent;
 
-      // Get color index from hex
-      let colorIdx = 0;
-      if (pdfData?.color_dict) {
-        for (const [colorInt, idx] of Object.entries(pdfData.color_dict)) {
-          const hex = `#${parseInt(colorInt).toString(16).padStart(6, "0")}`;
-          if (hex.toLowerCase() === colorHex.toLowerCase()) {
-            colorIdx = idx;
-            break;
-          }
-        }
-      }
-
-      // Extract alignment
-      const alignment = style.textAlign || "left";
-
-      // Extract text and style information from span
-      const spans = divElement.querySelectorAll("span");
-      const runs = Array.from(spans).map((span) => {
-        const spanStyle = span.style;
-        const fontFamily = spanStyle.fontFamily || "Helvetica";
-        const fontSize = parseFloat(spanStyle.fontSize) || 12;
-        const isBold = spanStyle.fontWeight === "bold" ? 1 : 0;
-        const isItalic = spanStyle.fontStyle === "italic" ? 1 : 0;
-
-        return {
-          T: span.textContent,
-          S: 0,
-          TS: [fontFamily, fontSize / DISPLAY_SCALE, isBold, isItalic],
-        };
-      });
-
-      // If no spans, create a run from the div's text content
-      if (runs.length === 0 && divElement.textContent) {
-        runs.push({
-          T: divElement.textContent,
-          S: 0,
-          TS: ["Helvetica", 12 / DISPLAY_SCALE, 0, 0],
-        });
-      }
-
-      // Construct the text object in the original format
-      const textObject = {
-        x: left / DISPLAY_SCALE,
-        y: top / DISPLAY_SCALE,
-        w: width / DISPLAY_SCALE,
-        clr: colorIdx,
-        A: alignment,
-        R: runs,
+      return {
+        textIndex: textIdx,
+        runIndex: runIdx,
+        newText: newText,
+        spanElement: spanElement,
       };
-
-      return { index: textIdx, textObject };
     } catch (error) {
       console.error("Error parsing edited HTML:", error);
       return null;
@@ -264,12 +193,13 @@ const PdfViewer = () => {
     // Process each edited text HTML
     editedTexts.forEach((htmlString) => {
       const parsed = parseEditedHTML(htmlString);
-      if (parsed && parsed.index >= 0) {
-        const { index, textObject } = parsed;
+      if (parsed && parsed.textIndex >= 0 && parsed.runIndex >= 0) {
+        const { textIndex, runIndex, newText } = parsed;
 
-        // Update the specific text in the current page
-        if (updatedPdfData.pages[currentPageIndex].Texts[index]) {
-          updatedPdfData.pages[currentPageIndex].Texts[index] = textObject;
+        // Update the specific run in the specific text object
+        const textObj = updatedPdfData.pages[currentPageIndex].Texts[textIndex];
+        if (textObj && textObj.R && textObj.R[runIndex]) {
+          textObj.R[runIndex].T = newText;
         }
       }
     });
@@ -277,7 +207,7 @@ const PdfViewer = () => {
     // Update pdfData with the modified copy
     setPdfData(updatedPdfData);
 
-    // Clear edited texts array
+    // Clear edited texts
     setEditedTexts([]);
 
     // Optionally send the updated data to the backend
@@ -289,7 +219,7 @@ const PdfViewer = () => {
       body: JSON.stringify(updatedPdfData),
     })
       .then((response) => response.json())
-      .then((data) => data)
+      .then((data) => console.log("Changes saved:", data))
       .catch((error) => console.error("Error saving changes:", error));
   };
 
@@ -344,10 +274,8 @@ const PdfViewer = () => {
             <div
               key={`text-overlay-${idx}`}
               className={`page-text-item page-text-${idx} ${
-                editMode ? "page-text-editable" : ""
+                editMode ? "page-text-editable-parent" : ""
               }`}
-              contentEditable={editMode}
-              suppressContentEditableWarning={true}
               style={{
                 position: "absolute",
                 left: toPx(text.x),
@@ -358,25 +286,31 @@ const PdfViewer = () => {
                 whiteSpace: "pre",
                 padding: "2px",
                 borderRadius: "2px",
-                boxShadow: editMode
-                  ? "0 0 0 1px rgba(59, 130, 246, 0.5)"
-                  : "none",
-                cursor: editMode ? "text" : "default",
+                cursor: editMode ? "default" : "default",
                 userSelect: "text",
                 zIndex: 10,
-              }}
-              onBlur={(e) => {
-                if (editMode) {
-                  setEditedTexts([...editedTexts, e.currentTarget.outerHTML]);
-                }
               }}
             >
               {text.R?.map((run, rIdx) => (
                 <span
                   key={rIdx}
                   className={`page-text-run page-text-run-${rIdx}`}
+                  data-parent-idx={idx}
+                  contentEditable={editMode}
+                  suppressContentEditableWarning={true}
                   style={{
                     ...getStyleFromTS(run.TS, currentPage),
+                    boxShadow: editMode ? "0 0 0 1px rgba(59, 130, 246, 0.5)" : "none",
+                    padding: editMode ? "2px" : "0",
+                    background: editMode ? "rgba(255, 255, 255, 0.8)" : "transparent",
+                    cursor: editMode ? "text" : "default",
+                    borderRadius: "2px",
+                    margin: "1px",
+                  }}
+                  onBlur={(e) => {
+                    if (editMode) {
+                      setEditedTexts([...editedTexts, e.currentTarget.outerHTML]);
+                    }
                   }}
                 >
                   {run.T}
