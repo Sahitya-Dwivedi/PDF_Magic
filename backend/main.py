@@ -1,4 +1,4 @@
-from fastapi import FastAPI, UploadFile, File
+from fastapi import FastAPI, UploadFile, File, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 import fitz  # PyMuPDF
 import base64
@@ -125,7 +125,8 @@ async def parse_pdf(pdfBlob: UploadFile = File(...)):
         return pdf_info
     except Exception as e:
         pdfData.append({"error": str(e)})
-        return {"error": str(e)}
+        raise HTTPException(status_code=500, detail=str(e))
+        # return {"error": e},500
 
 @app.post("/api/pdf-results")
 async def get_pdf_results():
