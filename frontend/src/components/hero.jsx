@@ -85,6 +85,7 @@ function Hero() {
           .then((response) => {
             console.log("PDF sent to backend successfully");
             if (!response.ok) {
+              alert("Failed to load PDF document.")
               throw new Error("Network response was not ok");
             }
             return response.json();
