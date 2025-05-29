@@ -63,8 +63,7 @@ const PdfViewer = () => {
     }
 
     fetchPdfData();
-  }, []); // Only run once on mount
-  console.log("PDF Data:", pdfData);
+  }, []);
 
   // Handle zoom in and out
 
@@ -157,8 +156,12 @@ const PdfViewer = () => {
 
       // Extract the parent text index and run index from class names
       const classNames = spanElement.className.split(" ");
-      const runIdxClass = classNames.find((cls) => cls.startsWith("page-text-run-"));
-      const runIdx = runIdxClass ? parseInt(runIdxClass.replace("page-text-run-", "")) : -1;
+      const runIdxClass = classNames.find((cls) =>
+        cls.startsWith("page-text-run-")
+      );
+      const runIdx = runIdxClass
+        ? parseInt(runIdxClass.replace("page-text-run-", ""))
+        : -1;
 
       // Get parent text element class name from the data attribute
       const parentTextIdx = spanElement.getAttribute("data-parent-idx");
@@ -181,8 +184,49 @@ const PdfViewer = () => {
     }
   };
 
+  // Function to correct JSON format for pdfData
+  const correctPdfDataJson = (data) => {
+    try {
+      // Check if data is already a string
+      if (typeof data === "string") {
+        // Try to parse and re-stringify to validate JSON format
+        return JSON.stringify(JSON.parse(data));
+      }
+
+      // If it's an object, properly stringify it
+      return JSON.stringify(data);
+    } catch (error) {
+      console.error("Error formatting PDF data:", error);
+
+      // Attempt to handle circular references by creating a safe copy
+      const getCircularReplacer = () => {
+        const seen = new WeakSet();
+        return (key, value) => {
+          if (typeof value === "object" && value !== null) {
+            if (seen.has(value)) {
+              return "[Circular Reference]";
+            }
+            seen.add(value);
+          }
+          return value;
+        };
+      };
+
+      // Try again with circular reference handling
+      try {
+        return JSON.stringify(data, getCircularReplacer());
+      } catch (err) {
+        console.error(
+          "Failed to stringify PDF data even with circular replacer:",
+          err
+        );
+        return JSON.stringify({ error: "Unable to format PDF data properly" });
+      }
+    }
+  };
+
   // Save changes to pdfData
-  const saveChanges = () => {
+  const saveChanges = async () => {
     if (editedTexts.length === 0) {
       return;
     }
@@ -210,17 +254,48 @@ const PdfViewer = () => {
     // Clear edited texts
     setEditedTexts([]);
 
-    // Optionally send the updated data to the backend
-    fetch("/api/save-pdf", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(updatedPdfData),
-    })
-      .then((response) => response.json())
-      .then((data) => console.log("Changes saved:", data))
-      .catch((error) => console.error("Error saving changes:", error));
+    // Format the data properly before sending
+    const formattedData = correctPdfDataJson(updatedPdfData);
+
+    console.log("Updated PDF Data:", updatedPdfData);
+
+    try {
+      // Send PDF data to the backend for processing
+      const response = await fetch("/api/save-pdf", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: formattedData,
+      });
+
+      if (!response.ok) {
+        throw new Error('Network response was not ok');
+      }
+
+      // Get the PDF as a blob
+      const blob = await response.blob();
+      
+      // Create a URL for the blob
+      const url = URL.createObjectURL(blob);
+      
+      // Create a download link and trigger the download
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `${fileName || "document"}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      
+      // Clean up
+      setTimeout(() => {
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+      }, 100);
+      
+      console.log("PDF downloaded successfully");
+    } catch (error) {
+      console.error("Error saving/downloading PDF:", error);
+    }
   };
 
   // Toggle edit mode with save functionality
@@ -300,16 +375,21 @@ const PdfViewer = () => {
                   suppressContentEditableWarning={true}
                   style={{
                     ...getStyleFromTS(run.TS, currentPage),
-                    boxShadow: editMode ? "0 0 0 1px rgba(59, 130, 246, 0.5)" : "none",
+                    boxShadow: "none", // Remove boxShadow border in edit mode
                     padding: editMode ? "2px" : "0",
-                    background: editMode ? "rgba(255, 255, 255, 0.8)" : "transparent",
+                    background: editMode
+                      ? "rgba(255, 255, 255, 0.8)"
+                      : "transparent",
                     cursor: editMode ? "text" : "default",
                     borderRadius: "2px",
                     margin: "1px",
                   }}
                   onBlur={(e) => {
                     if (editMode) {
-                      setEditedTexts([...editedTexts, e.currentTarget.outerHTML]);
+                      setEditedTexts([
+                        ...editedTexts,
+                        e.currentTarget.outerHTML,
+                      ]);
                     }
                   }}
                 >
