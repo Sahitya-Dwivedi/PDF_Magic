@@ -332,3 +332,52 @@ async def save_pdf(req: dict):
 async def clear_memo():
     pdfData.clear()
     return {"message": "Memo cleared."}
+
+@app.post("/api/pdf-merge")
+async def merge_pdfs(pdfFiles: list[UploadFile] = File(None)):
+    try:
+        print("Merging PDFs...")
+        
+        # Validate that we have files to merge
+        if not pdfFiles or len(pdfFiles) < 1:
+            raise HTTPException(status_code=400, detail="No PDF files provided")
+        
+        # Create a new PDF document for the merged result
+        merged_doc = fitz.open()
+        
+        # Process each uploaded PDF file
+        for pdf_file in pdfFiles:
+            if not pdf_file.filename.lower().endswith('.pdf'):
+                raise HTTPException(status_code=400, detail=f"File {pdf_file.filename} is not a PDF")
+                
+            contents = await pdf_file.read()
+            try:
+                doc = fitz.open(stream=contents, filetype="pdf")
+                
+                # Add all pages from this PDF to the merged document
+                merged_doc.insert_pdf(doc)
+                
+                # Close the source document
+                doc.close()
+            except Exception as e:
+                raise HTTPException(status_code=400, detail=f"Error processing {pdf_file.filename}: {str(e)}")
+        
+        # Save the merged PDF to a memory buffer
+        pdf_bytes = io.BytesIO()
+        merged_doc.save(pdf_bytes)
+        merged_doc.close()
+        
+        # Reset buffer position to beginning
+        pdf_bytes.seek(0)
+        
+        print(f"Successfully merged {len(pdfFiles)} PDFs")
+        
+        # Return as streaming response
+        return StreamingResponse(
+            pdf_bytes,
+            media_type="application/pdf",
+            headers={"Content-Disposition": "attachment; filename=merged_document.pdf"}
+        )
+    except Exception as e:
+        print(f"Error merging PDFs: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
