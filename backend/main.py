@@ -1,9 +1,13 @@
 from fastapi import FastAPI, UploadFile, File, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse, StreamingResponse
 import fitz  # PyMuPDF
-import base64
+import tempfile
+import os
+import uuid
+import io
 
-app = FastAPI()
+app = FastAPI(debug=True)
 pdfData = []
 
 app.add_middleware(
@@ -133,8 +137,72 @@ async def get_pdf_results():
     return pdfData
 
 @app.post("/api/save-pdf")
-async def savePdf(req):
-    print(req.body)
+async def save_pdf(req: dict):    
+    try:
+        data = req
+        print("Generating PDF from data...")
+        
+        # Create a new PDF document
+        doc = fitz.open()
+        
+        # For each page in the data
+        for page_data in data["pages"]:
+            # Create a page with the appropriate dimensions
+            page = doc.new_page(width=page_data["Width"], height=page_data["Height"])
+            
+            # Add text elements to the page
+            for text in page_data.get("Texts", []):
+                x, y = text.get("x", 0), text.get("y", 0)
+                
+                # Process each text run
+                for run in text.get("R", []):
+                    text_content = run.get("T", "")
+                    if not text_content:
+                        continue
+                    
+                    # Get style information
+                    style_info = run.get("TS", [])
+                    if isinstance(style_info, list) and len(style_info) >= 2:
+                        font_name, font_size = style_info[0], style_info[1]
+                        # Check if font is a built-in PDF font, otherwise use a default font
+                        # Built-in fonts: helv (Helvetica), tiro (Times), cour (Courier), symb (Symbol), zadb (Zapf Dingbats)
+                        built_in_fonts = ["helv", "tiro", "cour", "symb", "zadb"]
+                        if font_name.lower() not in built_in_fonts and not font_name.lower().startswith(tuple(built_in_fonts)):
+                            font_name = "helv"
+                    else:
+                        # Default font and size
+                        font_name, font_size = "helv", 11
+                    
+                    # Insert text
+                    try:
+                        page.insert_text(
+                            (x, y),
+                            text_content,
+                            fontname=font_name,
+                            fontsize=font_size
+                        )
+                    except Exception as text_error:
+                        print(f"Error inserting text: {text_error}")
+            
+        # Save PDF to memory buffer instead of temporary file
+        pdf_bytes = io.BytesIO()
+        doc.save(pdf_bytes)
+        doc.close()
+        
+        # Reset buffer position to beginning
+        pdf_bytes.seek(0)
+        
+        print("PDF generated successfully in memory")
+        
+        # Return as streaming response
+        return StreamingResponse(
+            pdf_bytes,
+            media_type="application/pdf",
+            headers={"Content-Disposition": "attachment; filename=generated_document.pdf"}
+        )
+    except Exception as e:
+        print(f"Error generating PDF: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/api/clear-memo")
 async def clear_memo():
