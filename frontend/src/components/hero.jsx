@@ -9,12 +9,15 @@ function Hero() {
   const [showTextToPdfModal, setShowTextToPdfModal] = useState(false);
   const [showPhotoToPdfModal, setShowPhotoToPdfModal] = useState(false);
   const [showPdfResultModal, setShowPdfResultModal] = useState(false);
+  const [showMergePdfModal, setShowMergePdfModal] = useState(false);
   // Animation state
   const [animateModal, setAnimateModal] = useState(false);
 
   // File content states
   const [selectedTextFileName, setSelectedTextFileName] = useState("");
   const [selectedPhotoFileName, setSelectedPhotoFileName] = useState("");
+  const [selectedPdfFileName, setSelectedPdfFileName] = useState("");
+  const [selectedPdfFiles, setSelectedPdfFiles] = useState([]);
   const [textContent, setTextContent] = useState("");
   const [photoContent, setPhotoContent] = useState("");
   const [pdfBlob, setPdfBlob] = useState(null);
@@ -30,6 +33,7 @@ function Hero() {
   const pdfFileInputRef = useRef(null);
   const textFileInputRef = useRef(null);
   const photoFileInputRef = useRef(null);
+  const mergePdfFileInputRef = useRef(null);
 
   useEffect(() => {
     if (showOptions) {
@@ -207,11 +211,18 @@ function Hero() {
       setIsConverting(false);
     }
   };
-
   const handleDownloadPdf = () => {
     if (!pdfBlob) return;
 
-    const fileName = selectedTextFileName.replace(/\.[^/.]+$/, ".pdf");
+    let fileName;
+    if (selectedTextFileName) {
+      fileName = selectedTextFileName.replace(/\.[^/.]+$/, ".pdf");
+    } else if (selectedPdfFiles.length > 0) {
+      fileName = "merged_document.pdf";
+    } else {
+      fileName = "document.pdf";
+    }
+    
     const a = document.createElement("a");
     a.href = pdfUrl;
     a.download = fileName;
@@ -253,6 +264,74 @@ function Hero() {
     setPdfCount((prevCount) => prevCount + 1);
   }
 
+  const handleMergePdfClick = () => {
+    if (mergePdfFileInputRef.current) {
+      mergePdfFileInputRef.current.value = "";
+      setShowMergePdfModal(true);
+    }
+  };
+
+  const handleMergePdfFilesSelected = (e) => {
+    const files = Array.from(e.target.files);
+    if (files && files.length > 0) {
+      if (files.length < 3)
+        setSelectedPdfFiles(files);
+      else
+        setSelectedPdfFiles(files);
+      
+      const fileNames = files.map(file => file.name);
+      if (fileNames.length < 3) {
+        setSelectedPdfFileName(fileNames.join(", "));
+      } else {
+        setSelectedPdfFileName(`${fileNames[0]}, ${fileNames[1]} and ${fileNames.length - 2} more...`);
+      }
+      
+      return files;
+    }
+  };
+
+  const mergePdfs = async () => {
+    if (!selectedPdfFiles || selectedPdfFiles.length === 0) {
+      console.error("No files available to merge");
+      return;
+    }
+
+    setIsConverting(true);
+
+    try {
+      // Create form data to send files to backend
+      const formData = new FormData();
+      selectedPdfFiles.forEach(file => {
+        formData.append("pdfFiles", file);
+      });
+
+      // Send to backend
+      const response = await fetch("/api/pdf-merge", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to merge PDFs");
+      }
+
+      // Get the merged PDF as a blob
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      
+      // Store the blob and URL in state
+      setPdfBlob(blob);
+      setPdfUrl(url);
+
+      // Hide the merge-pdf modal and show the result modal
+      setShowMergePdfModal(false);
+      setShowPdfResultModal(true);
+      setIsConverting(false);
+    } catch (error) {
+      console.error("Error merging PDFs:", error);
+      setIsConverting(false);
+    }
+  };
   const resetPdfStates = () => {
     // Clean up URL object to prevent memory leaks
     if (pdfUrl) URL.revokeObjectURL(pdfUrl);
@@ -261,6 +340,8 @@ function Hero() {
     setPdfUrl("");
     setSelectedTextFileName("");
     setSelectedPhotoFileName("");
+    setSelectedPdfFileName("");
+    setSelectedPdfFiles([]);
     setTextContent("");
     setPhotoContent("");
     if (textFileInputRef.current) {
@@ -268,6 +349,9 @@ function Hero() {
     }
     if (photoFileInputRef.current) {
       photoFileInputRef.current.value = "";
+    }
+    if (mergePdfFileInputRef.current) {
+      mergePdfFileInputRef.current.value = "";
     }
   };
 
@@ -324,10 +408,8 @@ function Hero() {
         <p className="text-xl text-gray-300 text-center max-w-2xl mb-10">
           Create, edit, and transform your PDFs with our powerful yet
           easy-to-use tools
-        </p>
-
-        {/* Main action cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 w-full max-w-4xl">
+        </p>        {/* Main action cards */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 w-full max-w-6xl">
           <div className="bg-gray-800/60 hover:bg-gray-800/80 backdrop-blur-sm rounded-xl p-8 shadow-xl transition-all hover:shadow-purple-500/20 hover:scale-105">
             <div className="flex flex-col items-center">
               <div className="bg-gradient-to-br from-purple-500 to-pink-500 p-4 rounded-full mb-6">
@@ -393,6 +475,45 @@ function Hero() {
                 className="hidden"
                 accept=".pdf"
                 onChange={handlePdfFileSelected}
+              />
+            </div>
+          </div>
+
+          <div className="bg-gray-800/60 hover:bg-gray-800/80 backdrop-blur-sm rounded-xl p-8 shadow-xl transition-all hover:shadow-purple-500/20 hover:scale-105">
+            <div className="flex flex-col items-center">
+              <div className="bg-gradient-to-br from-purple-500 to-pink-500 p-4 rounded-full mb-6">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-12 w-12 text-white"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2"
+                  />
+                </svg>
+              </div>
+              <h2 className="text-2xl font-bold mb-3">Merge PDF</h2>
+              <p className="text-gray-300 text-center mb-6">
+                Combine multiple PDFs into a single document
+              </p>
+              <button
+                className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white px-8 py-3 rounded-full font-medium transition-all"
+                onClick={handleMergePdfClick}
+              >
+                Upload PDFs
+              </button>
+              <input
+                type="file"
+                ref={mergePdfFileInputRef}
+                className="hidden"
+                accept=".pdf"
+                multiple={true}
+                onChange={handleMergePdfFilesSelected}
               />
             </div>
           </div>
@@ -868,9 +989,8 @@ function Hero() {
                   </svg>
                   <p className="text-gray-300 mb-2 font-medium">
                     Your PDF is ready!
-                  </p>
-                  <p className="text-purple-300 mb-4">
-                    {selectedTextFileName.replace(/\.[^/.]+$/, ".pdf")}
+                  </p>                  <p className="text-purple-300 mb-4">
+                    {selectedTextFileName ? selectedTextFileName.replace(/\.[^/.]+$/, ".pdf") : "merged_document.pdf"}
                   </p>
                 </div>
 
@@ -1010,6 +1130,157 @@ function Hero() {
                     onClick={() => {}}
                   >
                     Continue
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Merge PDF Modal */}
+        {showMergePdfModal && (
+          <div
+            className="fixed inset-0 bg-black/70 flex items-center justify-center z-50"
+            onClick={() => setShowMergePdfModal(false)}
+          >
+            <div
+              className="bg-gray-800 border border-purple-500/30 rounded-xl p-8 w-full max-w-md transform transition-all shadow-2xl shadow-purple-500/20"
+              onClick={(e) => e.stopPropagation()}
+              style={{ backdropFilter: "blur(12px)" }}
+            >
+              <div className="flex justify-between items-center mb-6">
+                <h3 className="text-xl font-bold text-center bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-pink-500">
+                  Select PDFs to Merge
+                </h3>
+                <button
+                  className="text-gray-400 hover:text-white"
+                  onClick={() => setShowMergePdfModal(false)}
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-5 w-5"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M6 18L18 6M6 6l12 12"
+                    />
+                  </svg>
+                </button>
+              </div>
+
+              <div className="space-y-6">
+                <div className="bg-gray-700/40 border-2 border-dashed border-purple-500/30 rounded-lg p-8 text-center">
+                  {selectedPdfFiles.length > 0 ? (
+                    <div className="flex flex-col items-center">
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        className="h-12 w-12 mx-auto text-green-400 mb-2"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                        />
+                      </svg>
+                      <p className="text-gray-300 mb-2 font-medium">
+                        Files Selected:
+                      </p>
+                      <p className="text-purple-300 mb-4 text-lg">
+                        {selectedPdfFileName}
+                      </p>
+                      <button
+                        className="bg-gray-600 hover:bg-gray-500 text-white px-6 py-2 rounded-full font-medium transition-all text-sm"
+                        onClick={() => {
+                          setSelectedPdfFiles([]);
+                          setSelectedPdfFileName("");
+                          mergePdfFileInputRef.current.click();
+                        }}
+                      >
+                        Change Files
+                      </button>
+                    </div>
+                  ) : (
+                    <>
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        className="h-12 w-12 mx-auto text-purple-400 mb-4"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
+                        />
+                      </svg>
+                      <p className="text-gray-300 mb-2">
+                        Drag & drop your PDF files here
+                      </p>
+                      <p className="text-gray-400 text-sm mb-4">or</p>
+                      <button
+                        className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white px-6 py-2 rounded-full font-medium transition-all"
+                        onClick={() => mergePdfFileInputRef.current.click()}
+                      >
+                        Browse Files
+                      </button>
+                    </>
+                  )}
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <button
+                    className="bg-gray-700 hover:bg-gray-600 text-white py-2 rounded-lg transition-all"
+                    onClick={() => setShowMergePdfModal(false)}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    className={`bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white py-2 rounded-lg transition-all ${
+                      !selectedPdfFiles.length || isConverting
+                        ? "opacity-50 cursor-not-allowed"
+                        : ""
+                    }`}
+                    onClick={mergePdfs}
+                    disabled={!selectedPdfFiles.length || isConverting}
+                  >
+                    {isConverting ? (
+                      <span className="flex items-center justify-center">
+                        <svg
+                          className="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
+                          xmlns="http://www.w3.org/2000/svg"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                        >
+                          <circle
+                            className="opacity-25"
+                            cx="12"
+                            cy="12"
+                            r="10"
+                            stroke="currentColor"
+                            strokeWidth="4"
+                          ></circle>
+                          <path
+                            className="opacity-75"
+                            fill="currentColor"
+                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                          ></path>
+                        </svg>
+                        Merging...
+                      </span>
+                    ) : (
+                      "Merge"
+                    )}
                   </button>
                 </div>
               </div>
