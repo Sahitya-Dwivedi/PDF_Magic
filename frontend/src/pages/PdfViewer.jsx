@@ -7,6 +7,8 @@ const PdfViewer = () => {
   const [currentPageIndex, setCurrentPageIndex] = useState(0);
   const [fileName, setFileName] = useState("");
   const [editedTexts, setEditedTexts] = useState([]);
+  // Add state for warning dialog
+  const [showWarning, setShowWarning] = useState(true);
 
   // Add ref for the SVG container
   const svgContainerRef = useRef(null);
@@ -64,6 +66,11 @@ const PdfViewer = () => {
 
     fetchPdfData();
   }, []);
+
+  // Function to acknowledge warning and close dialog
+  const acknowledgeWarning = () => {
+    setShowWarning(false);
+  };
 
   // Handle zoom in and out
 
@@ -270,28 +277,28 @@ const PdfViewer = () => {
       });
 
       if (!response.ok) {
-        throw new Error('Network response was not ok');
+        throw new Error("Network response was not ok");
       }
 
       // Get the PDF as a blob
       const blob = await response.blob();
-      
+
       // Create a URL for the blob
       const url = URL.createObjectURL(blob);
-      
+
       // Create a download link and trigger the download
       const link = document.createElement("a");
       link.href = url;
       link.download = `${fileName || "document"}.pdf`;
       document.body.appendChild(link);
       link.click();
-      
+
       // Clean up
       setTimeout(() => {
         document.body.removeChild(link);
         URL.revokeObjectURL(url);
       }, 100);
-      
+
       console.log("PDF downloaded successfully");
     } catch (error) {
       console.error("Error saving/downloading PDF:", error);
@@ -433,6 +440,38 @@ const PdfViewer = () => {
 
   return (
     <div className="page-viewer-container min-h-screen bg-black">
+      {/* Warning Dialog */}
+      {showWarning && (
+        <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50">
+          <div className="bg-gray-800 text-white p-6 rounded-lg shadow-lg max-w-md">
+            <h3 className="text-xl font-bold mb-4 text-purple-400">
+              PDF Viewer Warning
+            </h3>
+            <p className="mb-3">Please note the following limitations:</p>
+            <ul className="list-disc list-inside mb-4 space-y-1 text-gray-300">
+              <li>
+                No text reflow - long text will overflow containers or overlap
+              </li>
+              <li className="font-bold text-yellow-300 bg-gray-700 py-1 px-2 rounded">
+                PDF display may differ from standard viewers
+              </li>
+              <li>Text formatting might not be preserved perfectly</li>
+              <li>
+                Pdf having SVGs or Images can result in improper download
+                <span className="font-bold text-yellow-300 bg-gray-700 py-1 px-2 rounded">if text is edited</span>
+              </li>
+              <li>Changes apply only when you click "Save Changes"</li>
+            </ul>
+            <button
+              onClick={acknowledgeWarning}
+              className="w-full py-2 bg-purple-600 hover:bg-purple-700 rounded font-medium transition-colors"
+            >
+              I Understand
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Toolbar */}
       <div className="page-toolbar bg-gray-800 text-white p-4 shadow-md fixed top-0 left-0 right-0 z-10">
         <div className="container mx-auto flex flex-row items-center justify-between">
