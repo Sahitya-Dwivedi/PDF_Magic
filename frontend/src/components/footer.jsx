@@ -13,11 +13,7 @@ function Footer() {
             <p className="mt-2 text-sm">Transforming your documents with ease</p>
           </div>
           
-          <div className="flex space-x-6">
-            <a href="#" className="hover:text-purple-400">Terms</a>
-            <a href="#" className="hover:text-purple-400">Privacy</a>
-            <a href="#" className="hover:text-purple-400">Contact</a>
-          </div>
+          
         </div>
         <div className="mt-8 text-center text-sm">
           &copy; {new Date().getFullYear()} PDF Magic. All rights reserved.
