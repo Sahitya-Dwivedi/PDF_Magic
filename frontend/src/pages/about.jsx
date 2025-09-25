@@ -54,22 +54,6 @@ function About() {
                       <circle cx="4" cy="4" r="3"/>
                     </svg>
                   </div>
-                  <span>Privacy and security for your documents</span>
-                </li>
-                <li className="flex items-start">
-                  <div className="bg-gradient-to-br from-purple-500 to-pink-500 rounded-full p-1 mr-3 mt-1">
-                    <svg className="h-3 w-3 text-white" fill="currentColor" viewBox="0 0 8 8">
-                      <circle cx="4" cy="4" r="3"/>
-                    </svg>
-                  </div>
-                  <span>Innovation in PDF technology</span>
-                </li>
-                <li className="flex items-start">
-                  <div className="bg-gradient-to-br from-purple-500 to-pink-500 rounded-full p-1 mr-3 mt-1">
-                    <svg className="h-3 w-3 text-white" fill="currentColor" viewBox="0 0 8 8">
-                      <circle cx="4" cy="4" r="3"/>
-                    </svg>
-                  </div>
                   <span>Accessibility for all users</span>
                 </li>
               </ul>
