@@ -41,13 +41,13 @@ function Navbar() {
           >
             Home
           </Link>
-          <Link
-            to="#features"
+          <a
+            href="#features"
             className="relative hover:text-purple-400 transition-colors after:content-[''] after:absolute after:left-0 after:bottom-0 after:w-0 after:h-[2px] after:bg-purple-400 after:transition-all after:duration-300 hover:after:w-full"
             hidden={window.location.pathname === "/pdfviewer" ? true : false}
           >
             Features
-          </Link>
+          </a>
           <Link
             to="/about"
             className="relative hover:text-purple-400 transition-colors after:content-[''] after:absolute after:left-0 after:bottom-0 after:w-0 after:h-[2px] after:bg-purple-400 after:transition-all after:duration-300 hover:after:w-full"
