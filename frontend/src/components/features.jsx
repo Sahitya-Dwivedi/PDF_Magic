@@ -20,11 +20,14 @@ function Features() {
               )
             },
             {
-              title: "Extract Pages",
-              description: "Select and extract specific pages from your PDF",
+              title: "TEXT to PDF",
+              description: "Convert your TEXT files into PDF documents",
               icon: (
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2" />
+                  {/* New SVG for TXT to PDF */}
+                  <rect x="4" y="4" width="16" height="16" rx="2" stroke="currentColor" strokeWidth="2" fill="none"/>
+                  <text x="7" y="13" fontSize="6" fill="currentColor" fontFamily="monospace">TXT</text>
+                  <path d="M8 17h8M12 17v3" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
                 </svg>
               )
             },
