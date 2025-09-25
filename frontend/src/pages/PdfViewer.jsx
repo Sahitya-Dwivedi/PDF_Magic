@@ -458,7 +458,6 @@ const PdfViewer = () => {
               <li>Text formatting might not be preserved perfectly</li>
               <li>
                 Pdf having SVGs or Images can result in improper download
-                <span className="font-bold text-yellow-300 bg-gray-700 py-1 px-2 rounded">if text is edited</span>
               </li>
               <li>Changes apply only when you click "Save Changes"</li>
             </ul>
